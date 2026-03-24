@@ -7,6 +7,7 @@ import {
   ChevronRight,
   LayoutDashboard,
   Users,
+  UserCheck,
   ShieldAlert,
   FileText,
   Settings,
@@ -31,6 +32,7 @@ import {
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
   Users,
+  UserCheck,
   ShieldAlert,
   FileText,
   Settings,
