@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
-import { Geist } from "next/font/google";
+import { Geist, Prata } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+  const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+  const prata = Prata({weight:'400',subsets:['latin'],variable:'--font-heading'});
 
 export const metadata: Metadata = {
   title: "SwapOut",
@@ -17,7 +18,7 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
+    <html lang="en" className={cn("h-full antialiased", geist.variable, prata.variable)}>
       <body className="min-h-full flex flex-col bg-background text-foreground">{children}</body>
     </html>
   );
