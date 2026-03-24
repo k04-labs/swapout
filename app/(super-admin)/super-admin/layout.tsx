@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { SuperAdminLogoutButton } from "@/components/auth/super-admin-logout-button";
 import { requireSuperAdmin } from "@/lib/super-admin-auth";
 
 export default async function SuperAdminLayout({
@@ -16,14 +15,35 @@ export default async function SuperAdminLayout({
   return (
     <AppShell
       title="SuperAdmin Control Center"
-      subtitle="Platform governance, approvals, and oversight"
       roleLabel="SuperAdmin"
-      actions={<SuperAdminLogoutButton />}
+      userName="SuperAdmin"
+      logoutEndpoint="/api/super-admin/auth/logout"
+      logoutRedirect="/super-admin/login"
+      settingsHref="/super-admin/dashboard"
       navItems={[
-        { label: "Dashboard", href: "/super-admin/dashboard" },
-        { label: "SubAdmins", href: "/super-admin/sub-admins", disabled: true },
-        { label: "Employees", href: "/super-admin/employees", disabled: true },
-        { label: "Questions", href: "/super-admin/questions", disabled: true },
+        {
+          label: "Dashboard",
+          href: "/super-admin/dashboard",
+          icon: "LayoutDashboard",
+        },
+        {
+          label: "SubAdmins",
+          href: "/super-admin/sub-admins",
+          icon: "Users",
+          disabled: true,
+        },
+        {
+          label: "Employees",
+          href: "/super-admin/employees",
+          icon: "UserCheck",
+          disabled: true,
+        },
+        {
+          label: "Questions",
+          href: "/super-admin/questions",
+          icon: "FileText",
+          disabled: true,
+        },
       ]}
     >
       {children}

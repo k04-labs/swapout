@@ -92,7 +92,7 @@ export function AppShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-background">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -104,24 +104,24 @@ export function AppShell({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-30 flex w-56 flex-col border-r border-slate-200/80 bg-white transition-transform duration-200",
+          "fixed inset-y-0 left-0 z-30 flex w-56 flex-col border-r border-border bg-card transition-transform duration-200",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
           "lg:relative lg:translate-x-0 lg:z-auto",
         )}
       >
         {/* Logo */}
-        <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-4">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-600">
               <Shield className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-heading text-sm tracking-tight text-slate-800">
+            <span className="font-heading text-sm tracking-tight text-foreground">
               SwapOut
             </span>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 lg:hidden"
+            className="rounded-md p-1 text-muted-foreground hover:bg-accent lg:hidden"
           >
             <X className="h-4 w-4" />
           </button>
@@ -129,7 +129,9 @@ export function AppShell({
 
         {/* Section label */}
         <div className="px-4 pt-5 pb-1.5">
-          <p className="text-[11px] font-medium text-slate-400">{roleLabel}</p>
+          <p className="text-[11px] font-medium text-muted-foreground">
+            {roleLabel}
+          </p>
         </div>
 
         {/* Nav */}
@@ -149,8 +151,8 @@ export function AppShell({
                 className={cn(
                   "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-100",
                   isActive
-                    ? "bg-slate-100/80 text-slate-900"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
                   item.disabled && "pointer-events-none opacity-35",
                 )}
               >
@@ -159,15 +161,15 @@ export function AppShell({
                     className={cn(
                       "h-4 w-4 shrink-0",
                       isActive
-                        ? "text-slate-700"
-                        : "text-slate-400 group-hover:text-slate-500",
+                        ? "text-foreground"
+                        : "text-muted-foreground group-hover:text-foreground",
                     )}
                     strokeWidth={1.8}
                   />
                 )}
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge != null && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-200/80 px-1 font-mono text-[10px] font-bold text-slate-600">
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 font-mono text-[10px] font-bold text-muted-foreground">
                     {item.badge}
                   </span>
                 )}
@@ -175,8 +177,8 @@ export function AppShell({
                   className={cn(
                     "h-3.5 w-3.5 shrink-0 transition-colors",
                     isActive
-                      ? "text-slate-400"
-                      : "text-slate-300 opacity-0 group-hover:opacity-100",
+                      ? "text-muted-foreground"
+                      : "text-muted-foreground/40 opacity-0 group-hover:opacity-100",
                   )}
                 />
               </Link>
@@ -185,11 +187,11 @@ export function AppShell({
         </nav>
 
         {/* Bottom profile dropdown */}
-        <div className="border-t border-slate-100 p-2">
+        <div className="border-t border-border p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-slate-50 transition-colors outline-none">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600">
+              <button className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-accent/50 transition-colors outline-none">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-foreground">
                   {userName
                     ? userName
                         .split(" ")
@@ -200,16 +202,16 @@ export function AppShell({
                     : "U"}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-slate-700 truncate leading-tight">
+                  <p className="text-[13px] font-medium text-foreground truncate leading-tight">
                     {userName ?? "User"}
                   </p>
                   {userEmail && (
-                    <p className="text-[10px] text-slate-400 truncate leading-tight">
+                    <p className="text-[10px] text-muted-foreground truncate leading-tight">
                       {userEmail}
                     </p>
                   )}
                 </div>
-                <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -240,15 +242,15 @@ export function AppShell({
       {/* Main area */}
       <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 lg:px-6">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:px-6">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 lg:hidden"
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-accent lg:hidden"
             >
               <Menu className="h-4 w-4" />
             </button>
-            <h1 className="font-heading text-lg text-slate-900">{title}</h1>
+            <h1 className="font-heading text-lg text-foreground">{title}</h1>
           </div>
         </header>
 

@@ -10,7 +10,7 @@ import {
 
 export default function SubAdminLoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+    <main className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="grid w-full max-w-4xl gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
@@ -21,8 +21,9 @@ export default function SubAdminLoginPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <GoogleSignInButton />
-            <p className="text-xs text-slate-500">
-              New accounts start in a pending state until approved by SuperAdmin.
+            <p className="text-xs text-muted-foreground">
+              New accounts start in a pending state until approved by
+              SuperAdmin.
             </p>
           </CardContent>
         </Card>
@@ -30,16 +31,18 @@ export default function SubAdminLoginPage() {
         <Card>
           <CardHeader>
             <CardTitle>SuperAdmin Access</CardTitle>
-            <CardDescription>Use username and password credentials.</CardDescription>
+            <CardDescription>
+              Use username and password credentials.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Link
               href="/super-admin/login"
-              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+              className="inline-flex h-10 w-full items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition hover:bg-accent"
             >
               Go to SuperAdmin Login
             </Link>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-muted-foreground">
               This is an internal tool. No public landing page is exposed.
             </p>
           </CardContent>

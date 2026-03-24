@@ -97,16 +97,18 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
-        <p className="text-sm text-slate-400">Loading employee details...</p>
+      <div className="rounded-md border border-border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">
+          Loading employee details...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-md border border-red-200/80 bg-red-50/40 p-6">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="rounded-md border border-red-200/80 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20 p-6">
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
@@ -114,8 +116,8 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
   const employee = data?.employee;
   if (!employee) {
     return (
-      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
-        <p className="text-sm text-slate-400">Employee not found.</p>
+      <div className="rounded-md border border-border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">Employee not found.</p>
       </div>
     );
   }
@@ -125,10 +127,10 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="font-heading text-xl text-slate-900">
+          <h2 className="font-heading text-xl text-foreground">
             {employee.fullName}
           </h2>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {employee.department} · {employee.jobRole} · {employee.site}
           </p>
         </div>
@@ -147,45 +149,45 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Profile info */}
-      <div className="rounded-md border border-slate-200/80 bg-white p-4">
+      <div className="rounded-md border border-border bg-card p-4">
         <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Department
             </p>
-            <p className="mt-0.5 text-slate-700">{employee.department}</p>
+            <p className="mt-0.5 text-foreground">{employee.department}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Job Role
             </p>
-            <p className="mt-0.5 text-slate-700">{employee.jobRole}</p>
+            <p className="mt-0.5 text-foreground">{employee.jobRole}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Phone
             </p>
-            <p className="mt-0.5 text-slate-700">{employee.phoneNumber}</p>
+            <p className="mt-0.5 text-foreground">{employee.phoneNumber}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Site
             </p>
-            <p className="mt-0.5 text-slate-700">{employee.site}</p>
+            <p className="mt-0.5 text-foreground">{employee.site}</p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Enrolled
             </p>
-            <p className="mt-0.5 text-slate-700">
+            <p className="mt-0.5 text-foreground">
               {formatDate(employee.createdAt)}
             </p>
           </div>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Last Assessed
             </p>
-            <p className="mt-0.5 text-slate-700">
+            <p className="mt-0.5 text-foreground">
               {formatDate(employee.report?.lastAssessedAt)}
             </p>
           </div>
@@ -194,22 +196,22 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Total Assessments
           </p>
-          <p className="font-heading text-2xl tracking-tight text-slate-900">
+          <p className="font-heading text-2xl tracking-tight text-foreground">
             {employee.report?.totalSubmissions ?? 0}
           </p>
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Average Score
           </p>
           <ScoreBadge score={employee.report?.averageScore ?? null} />
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Latest Remark
           </p>
           <RemarkBadge
@@ -217,8 +219,8 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
             remark={employee.report?.latestRemark ?? null}
           />
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
             Trend
           </p>
           <TrendIndicator trend={employee.report?.trend ?? "stable"} />
@@ -226,39 +228,39 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Assessment history */}
-      <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
-        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="rounded-md border border-border bg-card overflow-hidden">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div>
-            <p className="text-sm font-medium text-slate-800">
+            <p className="text-sm font-medium text-foreground">
               Assessment History
             </p>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-muted-foreground">
               {employee.submissions.length} total submissions
             </p>
           </div>
           <a
             href={`/api/sub-admin/employees/${employee.id}/export/csv`}
-            className="text-[11px] font-medium text-violet-600 hover:text-violet-700"
+            className="text-[11px] font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
           >
             Export CSV
           </a>
         </div>
         {employee.submissions.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-400">
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
             No assessments submitted yet.
           </p>
         ) : (
-          <div className="divide-y divide-slate-100/80">
+          <div className="divide-y divide-border">
             {employee.submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="flex items-center gap-4 px-4 py-2.5 hover:bg-slate-50/50 transition-colors"
+                className="flex items-center gap-4 px-4 py-2.5 hover:bg-accent/50 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-700">
+                  <p className="text-xs font-medium text-foreground">
                     {formatDate(submission.submittedAt)}
                   </p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-muted-foreground">
                     by {submission.subAdmin.name || submission.subAdmin.email}
                   </p>
                 </div>

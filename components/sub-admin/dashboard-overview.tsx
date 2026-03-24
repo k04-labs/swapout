@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
+import { useTheme } from "@/lib/theme";
 
 type DashboardStats = {
   metrics: {
@@ -96,9 +97,9 @@ function avColor(name: string) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-md">
-      <p className="font-medium text-slate-700">{label}</p>
-      <p className="text-slate-500">{payload[0]?.value}</p>
+    <div className="rounded-md border border-border bg-card px-2.5 py-2 text-xs shadow-md">
+      <p className="font-medium text-foreground">{label}</p>
+      <p className="text-muted-foreground">{payload[0]?.value}</p>
     </div>
   );
 }
@@ -119,7 +120,7 @@ function DashboardOverviewSkeleton() {
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={`metric-skeleton-${index}`}
-            className="rounded-md border border-slate-200/80 bg-white p-4"
+            className="rounded-md border border-border bg-card p-4"
           >
             <Skeleton className="h-3 w-24 mb-3" />
             <Skeleton className="h-7 w-16" />
@@ -129,12 +130,12 @@ function DashboardOverviewSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white p-4">
+        <div className="lg:col-span-2 rounded-md border border-border bg-card p-4">
           <Skeleton className="h-4 w-32 mb-1" />
           <Skeleton className="h-3 w-52 mb-4" />
           <Skeleton className="h-40 w-full" />
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-border bg-card p-4">
           <Skeleton className="h-4 w-40 mb-1" />
           <Skeleton className="h-3 w-48 mb-4" />
           <Skeleton className="h-40 w-full" />
@@ -149,6 +150,10 @@ export function DashboardOverview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const { theme } = useTheme();
+  const gridColor = theme === "dark" ? "#27272a" : "#f1f5f9";
+  const tickColor = theme === "dark" ? "#71717a" : "#94a3b8";
+  const barFill = theme === "dark" ? "rgba(124,58,237,0.25)" : "#ede9fe";
 
   useEffect(() => {
     let mounted = true;
@@ -246,11 +251,11 @@ export function DashboardOverview() {
 
   if (error) {
     return (
-      <div className="rounded-md border border-slate-200/80 bg-white p-6">
-        <p className="text-sm font-medium text-slate-800">
+      <div className="rounded-md border border-border bg-card p-6">
+        <p className="text-sm font-medium text-foreground">
           Unable to load dashboard
         </p>
-        <p className="mt-1 text-xs text-slate-500">{error}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{error}</p>
         <Button
           onClick={() => window.location.reload()}
           size="sm"
@@ -299,8 +304,8 @@ export function DashboardOverview() {
       {/* Page heading */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-xl text-slate-900">Dashboard</h2>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <h2 className="font-heading text-xl text-foreground">Dashboard</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Operational snapshot for employees, assessments & activity.
           </p>
         </div>
@@ -319,23 +324,25 @@ export function DashboardOverview() {
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className="rounded-md border border-slate-200/80 bg-white p-4 hover:shadow-sm transition-shadow"
+            className="rounded-md border border-border bg-card p-4 hover:shadow-sm transition-shadow"
           >
             <div className="mb-3 flex items-start justify-between">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {metric.label}
               </p>
-              <metric.icon className="h-4 w-4 text-slate-300" />
+              <metric.icon className="h-4 w-4 text-muted-foreground/50" />
             </div>
-            <p className="font-heading text-2xl tracking-tight text-slate-900">
+            <p className="font-heading text-2xl tracking-tight text-foreground">
               {metric.value}
               {"valueSuffix" in metric && (
-                <span className="font-sans text-sm font-normal text-slate-400">
+                <span className="font-sans text-sm font-normal text-muted-foreground">
                   {metric.valueSuffix}
                 </span>
               )}
             </p>
-            <p className="mt-1 text-xs text-slate-400">{metric.description}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {metric.description}
+            </p>
           </div>
         ))}
       </div>
@@ -343,22 +350,22 @@ export function DashboardOverview() {
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Score trend */}
-        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white p-4">
+        <div className="lg:col-span-2 rounded-md border border-border bg-card p-4">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-800">Score Trend</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm font-medium text-foreground">Score Trend</p>
+              <p className="text-xs text-muted-foreground">
                 Recent score movement from submissions
               </p>
             </div>
             {scoreTrendData.length > 1 && (
-              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 border border-emerald-100">
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800">
                 <TrendingUp className="h-3 w-3" /> Active
               </span>
             )}
           </div>
           {scoreTrendData.length === 0 ? (
-            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-slate-200 text-sm text-slate-400">
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
               No score trend data yet.
             </div>
           ) : (
@@ -381,18 +388,18 @@ export function DashboardOverview() {
                 </defs>
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="#f1f5f9"
+                  stroke={gridColor}
                   vertical={false}
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  tick={{ fontSize: 10, fill: tickColor }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   domain={[0, 5]}
-                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  tick={{ fontSize: 10, fill: tickColor }}
                   axisLine={false}
                   tickLine={false}
                 />
@@ -412,38 +419,42 @@ export function DashboardOverview() {
         </div>
 
         {/* Recently added employees */}
-        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="text-sm font-medium text-slate-800">Recently Added</p>
-            <p className="text-xs text-slate-400">Newest employee profiles</p>
+        <div className="rounded-md border border-border bg-card overflow-hidden">
+          <div className="border-b border-border px-4 py-3">
+            <p className="text-sm font-medium text-foreground">
+              Recently Added
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Newest employee profiles
+            </p>
           </div>
-          <div className="divide-y divide-slate-100/80">
+          <div className="divide-y divide-border">
             {data.recentEmployees.length === 0 ? (
-              <p className="px-4 py-6 text-center text-sm text-slate-400">
+              <p className="px-4 py-6 text-center text-sm text-muted-foreground">
                 No employees added yet.
               </p>
             ) : (
               data.recentEmployees.map((employee) => (
                 <div
                   key={employee.id}
-                  className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-50/50 transition-colors"
+                  className="flex items-center gap-2.5 px-4 py-2.5 hover:bg-accent/50 transition-colors"
                 >
                   <span
-                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ring-1 ring-black/5 ${avColor(employee.fullName)}`}
+                    className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ring-1 ring-black/5 dark:ring-white/10 ${avColor(employee.fullName)}`}
                   >
                     {toInitials(employee.fullName)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-800 truncate leading-tight">
+                    <p className="text-xs font-medium text-foreground truncate leading-tight">
                       {employee.fullName}
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate leading-tight">
+                    <p className="text-[10px] text-muted-foreground truncate leading-tight">
                       {employee.department} · {employee.site}
                     </p>
                   </div>
                   <Link
                     href={`/sub-admin/employees/${employee.id}`}
-                    className="text-[11px] font-medium text-violet-600 hover:text-violet-700 shrink-0"
+                    className="text-[11px] font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 shrink-0"
                   >
                     View
                   </Link>
@@ -457,47 +468,47 @@ export function DashboardOverview() {
       {/* Bottom row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Recent submissions */}
-        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+        <div className="lg:col-span-2 rounded-md border border-border bg-card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div>
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-foreground">
                 Recent Submissions
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Last completed assessments
               </p>
             </div>
             <div className="relative w-48">
-              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search employee..."
-                className="h-8 pl-8 text-xs border-slate-200 bg-slate-50"
+                className="h-8 pl-8 text-xs"
               />
             </div>
           </div>
-          <div className="divide-y divide-slate-100/80">
+          <div className="divide-y divide-border">
             {filteredSubmissions.length === 0 ? (
-              <p className="px-4 py-8 text-center text-sm text-slate-400">
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">
                 No matches found.
               </p>
             ) : (
               filteredSubmissions.map((submission) => (
                 <div
                   key={submission.id}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-accent/50 transition-colors"
                 >
                   <span
-                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ring-black/5 ${avColor(submission.employee.fullName)}`}
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ring-1 ring-black/5 dark:ring-white/10 ${avColor(submission.employee.fullName)}`}
                   >
                     {toInitials(submission.employee.fullName)}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-800 truncate leading-tight">
+                    <p className="text-xs font-medium text-foreground truncate leading-tight">
                       {submission.employee.fullName}
                     </p>
-                    <p className="text-[10px] text-slate-400 truncate leading-tight">
+                    <p className="text-[10px] text-muted-foreground truncate leading-tight">
                       {formatDate(submission.submittedAt)}
                     </p>
                   </div>
@@ -510,7 +521,7 @@ export function DashboardOverview() {
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="rounded-md p-1 text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors">
+                      <button className="rounded-md p-1 text-muted-foreground/50 hover:text-foreground hover:bg-accent transition-colors">
                         <MoreHorizontal className="h-3.5 w-3.5" />
                       </button>
                     </DropdownMenuTrigger>
@@ -540,16 +551,18 @@ export function DashboardOverview() {
         </div>
 
         {/* Submission volume + stats */}
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-border bg-card p-4">
           <div className="mb-4">
-            <p className="text-sm font-medium text-slate-800">
+            <p className="text-sm font-medium text-foreground">
               Submission Volume
             </p>
-            <p className="text-xs text-slate-400">Daily submission count</p>
+            <p className="text-xs text-muted-foreground">
+              Daily submission count
+            </p>
           </div>
           <div className="h-40">
             {volumeData.length === 0 ? (
-              <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-200 text-sm text-slate-400">
+              <div className="flex h-full items-center justify-center rounded-md border border-dashed border-border text-sm text-muted-foreground">
                 Not enough data.
               </div>
             ) : (
@@ -560,17 +573,17 @@ export function DashboardOverview() {
                 >
                   <CartesianGrid
                     strokeDasharray="3 3"
-                    stroke="#f1f5f9"
+                    stroke={gridColor}
                     vertical={false}
                   />
                   <XAxis
                     dataKey="label"
-                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    tick={{ fontSize: 10, fill: tickColor }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
-                    tick={{ fontSize: 10, fill: "#94a3b8" }}
+                    tick={{ fontSize: 10, fill: tickColor }}
                     axisLine={false}
                     tickLine={false}
                     allowDecimals={false}
@@ -578,7 +591,7 @@ export function DashboardOverview() {
                   <Tooltip content={<ChartTooltip />} />
                   <Bar
                     dataKey="count"
-                    fill="#ede9fe"
+                    fill={barFill}
                     radius={[3, 3, 0, 0]}
                     activeBar={{ fill: "#7c3aed" }}
                   />
@@ -587,23 +600,29 @@ export function DashboardOverview() {
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-100 space-y-2.5">
+          <div className="mt-4 pt-4 border-t border-border space-y-2.5">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Employees enrolled</p>
-              <span className="font-mono text-xs font-semibold text-slate-700">
+              <p className="text-xs text-muted-foreground">
+                Employees enrolled
+              </p>
+              <span className="font-mono text-xs font-semibold text-foreground">
                 {data.metrics.employeesCount}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Completed submissions</p>
-              <span className="font-mono text-xs font-semibold text-slate-700">
+              <p className="text-xs text-muted-foreground">
+                Completed submissions
+              </p>
+              <span className="font-mono text-xs font-semibold text-foreground">
                 {data.metrics.submissionsCount}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-xs text-slate-500">Overdue reassessment</p>
+              <p className="text-xs text-muted-foreground">
+                Overdue reassessment
+              </p>
               <span
-                className={`font-mono text-xs font-semibold ${data.metrics.staleEmployeesCount > 0 ? "text-amber-600" : "text-emerald-600"}`}
+                className={`font-mono text-xs font-semibold ${data.metrics.staleEmployeesCount > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}
               >
                 {data.metrics.staleEmployeesCount}
               </span>

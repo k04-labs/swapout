@@ -51,10 +51,10 @@ export default async function SubAdminLayout({
           disabled: !isApproved,
         },
         {
-          label: isApproved ? "Status" : "Pending Status",
-          href: getSubAdminRedirect(subAdmin.approvalStatus),
-          icon: "ShieldAlert",
-          disabled: false,
+          label: "Reports",
+          href: "/sub-admin/reports",
+          icon: "FileText",
+          disabled: !isApproved,
         },
         {
           label: "Settings",

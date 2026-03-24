@@ -35,7 +35,9 @@ export function GoogleSignInButton() {
         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
         Continue with Google
       </Button>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+      ) : null}
     </div>
   );
 }

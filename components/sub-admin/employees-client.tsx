@@ -194,8 +194,8 @@ export function EmployeesClient() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading text-xl text-slate-900">Employees</h2>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <h2 className="font-heading text-xl text-foreground">Employees</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
             Manage your workforce and trigger assessments.
           </p>
         </div>
@@ -205,47 +205,49 @@ export function EmployeesClient() {
       </div>
 
       {loading ? (
-        <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
-          <p className="text-sm text-slate-400">Loading employees...</p>
+        <div className="rounded-md border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">Loading employees...</p>
         </div>
       ) : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : null}
 
       {!loading && employees.length === 0 ? (
-        <div className="rounded-md border border-dashed border-slate-200 bg-white p-8 text-center">
-          <p className="text-sm text-slate-500">
+        <div className="rounded-md border border-dashed border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">
             No employees yet. Add your first employee to begin assessments.
           </p>
         </div>
       ) : null}
 
       {employees.length > 0 ? (
-        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-md border border-border bg-card overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Name
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Department
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Role
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Site
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Last Assessed
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Score
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Remark
                 </TableHead>
-                <TableHead className="text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Actions
                 </TableHead>
               </TableRow>
@@ -254,23 +256,23 @@ export function EmployeesClient() {
               {employees.map((employee) => (
                 <TableRow key={employee.id}>
                   <TableCell>
-                    <p className="font-medium text-slate-800">
+                    <p className="font-medium text-foreground">
                       {employee.fullName}
                     </p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-[10px] text-muted-foreground">
                       {employee.phoneNumber}
                     </p>
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {employee.department}
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {employee.jobRole}
                   </TableCell>
-                  <TableCell className="text-slate-600">
+                  <TableCell className="text-muted-foreground">
                     {employee.site}
                   </TableCell>
-                  <TableCell className="text-slate-500 text-xs">
+                  <TableCell className="text-muted-foreground text-xs">
                     {formatDate(employee.report?.lastAssessedAt)}
                   </TableCell>
                   <TableCell>
@@ -285,7 +287,7 @@ export function EmployeesClient() {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                        <button className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
                           <MoreHorizontal className="h-4 w-4" />
                         </button>
                       </DropdownMenuTrigger>
@@ -330,9 +332,9 @@ export function EmployeesClient() {
       ) : null}
 
       {formOpen ? (
-        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
-          <div className="border-b border-slate-100 px-5 py-3">
-            <p className="text-sm font-medium text-slate-800">
+        <div className="rounded-md border border-border bg-card overflow-hidden">
+          <div className="border-b border-border px-5 py-3">
+            <p className="text-sm font-medium text-foreground">
               {editingEmployee ? "Edit Employee" : "Add Employee"}
             </p>
           </div>
@@ -341,7 +343,7 @@ export function EmployeesClient() {
               <div className="space-y-1.5">
                 <Label
                   htmlFor="fullName"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-xs font-medium text-muted-foreground"
                 >
                   Full Name
                 </Label>
@@ -355,14 +357,13 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label
                   htmlFor="department"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-xs font-medium text-muted-foreground"
                 >
                   Department
                 </Label>
@@ -376,14 +377,13 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label
                   htmlFor="jobRole"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-xs font-medium text-muted-foreground"
                 >
                   Job Role
                 </Label>
@@ -397,14 +397,13 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label
                   htmlFor="phoneNumber"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-xs font-medium text-muted-foreground"
                 >
                   Phone Number
                 </Label>
@@ -418,14 +417,13 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label
                   htmlFor="site"
-                  className="text-xs font-medium text-slate-600"
+                  className="text-xs font-medium text-muted-foreground"
                 >
                   Site / Location
                 </Label>
@@ -439,7 +437,6 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 

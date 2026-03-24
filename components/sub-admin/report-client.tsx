@@ -129,24 +129,24 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
-        <p className="text-sm text-slate-400">Loading report...</p>
+      <div className="rounded-md border border-border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">Loading report...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-md border border-red-200/80 bg-red-50/40 p-6">
-        <p className="text-sm text-red-600">{error}</p>
+      <div className="rounded-md border border-red-200/80 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20 p-6">
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
       </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
-        <p className="text-sm text-slate-400">Report unavailable.</p>
+      <div className="rounded-md border border-border bg-card p-8 text-center">
+        <p className="text-sm text-muted-foreground">Report unavailable.</p>
       </div>
     );
   }
@@ -156,10 +156,10 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="font-heading text-xl text-slate-900">
+          <h2 className="font-heading text-xl text-foreground">
             {data.employee.fullName}
           </h2>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <p className="mt-0.5 text-xs text-muted-foreground">
             {data.employee.department} · {data.employee.jobRole} ·{" "}
             {data.employee.site}
           </p>
@@ -184,32 +184,32 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
       {/* Stat cards */}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Total Submissions
           </p>
-          <p className="mt-1 font-heading text-2xl text-slate-900">
+          <p className="mt-1 font-heading text-2xl text-foreground">
             {data.report?.totalSubmissions ?? 0}
           </p>
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Latest Score
           </p>
           <div className="mt-1">
             <ScoreBadge score={data.report?.latestScore ?? null} />
           </div>
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Average Score
           </p>
           <div className="mt-1">
             <ScoreBadge score={data.report?.averageScore ?? null} />
           </div>
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Latest Remark
           </p>
           <div className="mt-1">
@@ -222,14 +222,14 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
       </section>
 
       {/* Trend summary */}
-      <div className="rounded-md border border-slate-200/80 bg-white p-5">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="rounded-md border border-border bg-card p-5">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           Trend Summary
         </h3>
         <div className="mt-2 flex items-center gap-3">
           <TrendIndicator trend={data.report?.trend ?? "stable"} />
         </div>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           {data.report?.latestRemarkDescription ??
             "No remark description available yet."}
         </p>
@@ -237,14 +237,14 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-md border border-slate-200/80 bg-white p-5">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-5">
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Score Trend
           </h3>
           <ScoreTrendChart data={trendData} />
         </div>
-        <div className="rounded-md border border-slate-200/80 bg-white p-5">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+        <div className="rounded-md border border-border bg-card p-5">
+          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Competency Breakdown
           </h3>
           <CompetencyBarChart data={competencyData} />
@@ -252,30 +252,30 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Assessment history */}
-      <div className="rounded-md border border-slate-200/80 bg-white">
-        <div className="border-b border-slate-100 px-5 py-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="rounded-md border border-border bg-card">
+        <div className="border-b border-border px-5 py-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             Assessment History
           </h3>
         </div>
         {data.submissions.length === 0 ? (
-          <p className="px-5 py-6 text-center text-sm text-slate-400">
+          <p className="px-5 py-6 text-center text-sm text-muted-foreground">
             No submissions yet.
           </p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Date
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Score
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Remark
                 </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Questions
                 </TableHead>
               </TableRow>
@@ -283,7 +283,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
             <TableBody>
               {data.submissions.map((submission) => (
                 <TableRow key={submission.id}>
-                  <TableCell className="text-slate-700">
+                  <TableCell className="text-foreground">
                     {formatDate(submission.submittedAt)}
                   </TableCell>
                   <TableCell>
@@ -295,7 +295,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
                       remark={submission.remark}
                     />
                   </TableCell>
-                  <TableCell className="text-slate-700">
+                  <TableCell className="text-foreground">
                     {submission._count.responses}
                   </TableCell>
                 </TableRow>

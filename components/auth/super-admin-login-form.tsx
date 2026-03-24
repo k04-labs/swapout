@@ -29,7 +29,9 @@ export function SuperAdminLoginForm() {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+        const payload = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
         setError(payload?.message ?? "Invalid credentials");
         return;
       }
@@ -71,7 +73,9 @@ export function SuperAdminLoginForm() {
         />
       </div>
 
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : null}
 
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

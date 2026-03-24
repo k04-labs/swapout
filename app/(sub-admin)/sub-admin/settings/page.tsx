@@ -19,8 +19,8 @@ export default async function SubAdminSettingsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-heading text-xl text-slate-900">Settings</h2>
-        <p className="mt-0.5 text-xs text-slate-400">
+        <h2 className="font-heading text-xl text-foreground">Settings</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           Manage your profile and preferences.
         </p>
       </div>
