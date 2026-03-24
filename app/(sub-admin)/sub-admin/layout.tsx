@@ -47,11 +47,22 @@ export default async function SubAdminLayout({
       }
       banner={banner}
       navItems={[
-        { label: "Dashboard", href: "/sub-admin/dashboard", disabled: !isApproved },
-        { label: "Employees", href: "/sub-admin/employees", disabled: !isApproved },
+        {
+          label: "Dashboard",
+          href: "/sub-admin/dashboard",
+          icon: "LayoutDashboard",
+          disabled: !isApproved,
+        },
+        {
+          label: "Employees",
+          href: "/sub-admin/employees",
+          icon: "Users",
+          disabled: !isApproved,
+        },
         {
           label: isApproved ? "Status" : "Pending Status",
           href: getSubAdminRedirect(subAdmin.approvalStatus),
+          icon: "ShieldAlert",
           disabled: false,
         },
       ]}

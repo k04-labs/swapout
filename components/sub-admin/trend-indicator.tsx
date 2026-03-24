@@ -1,5 +1,4 @@
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type Trend = "improving" | "declining" | "stable" | null | undefined;
 
@@ -10,8 +9,8 @@ type TrendIndicatorProps = {
 export function TrendIndicator({ trend }: TrendIndicatorProps) {
   if (trend === "improving") {
     return (
-      <span className={cn("inline-flex items-center gap-1 text-sm font-medium text-emerald-700")}>
-        <ArrowUpRight className="h-4 w-4" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+        <ArrowUpRight className="h-3.5 w-3.5" />
         Improving
       </span>
     );
@@ -19,16 +18,16 @@ export function TrendIndicator({ trend }: TrendIndicatorProps) {
 
   if (trend === "declining") {
     return (
-      <span className={cn("inline-flex items-center gap-1 text-sm font-medium text-red-600")}>
-        <ArrowDownRight className="h-4 w-4" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 border border-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-600">
+        <ArrowDownRight className="h-3.5 w-3.5" />
         Declining
       </span>
     );
   }
 
   return (
-    <span className={cn("inline-flex items-center gap-1 text-sm font-medium text-slate-600")}>
-      <ArrowRight className="h-4 w-4" />
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+      <ArrowRight className="h-3.5 w-3.5" />
       Stable
     </span>
   );

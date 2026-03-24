@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
-import { cn } from "@/lib/utils";
 
 type EmployeeDetailPayload = {
   message?: string;
@@ -71,13 +69,19 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
         const payload = (await response.json()) as EmployeeDetailPayload;
         if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load employee details.");
+          throw new Error(
+            payload.message ?? "Failed to load employee details.",
+          );
         }
 
         if (mounted) setData(payload);
       } catch (loadError) {
         if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Failed to load employee details.");
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Failed to load employee details.",
+          );
         }
       } finally {
         if (mounted) setLoading(false);
@@ -92,146 +96,184 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
   }, [employeeId]);
 
   if (loading) {
-    return <p className="text-sm text-slate-500">Loading employee details...</p>;
+    return (
+      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+        <p className="text-sm text-slate-400">Loading employee details...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="text-sm text-red-600">{error}</p>;
+    return (
+      <div className="rounded-xl border border-red-200/80 bg-red-50/40 p-6">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
   }
 
   const employee = data?.employee;
   if (!employee) {
-    return <p className="text-sm text-slate-500">Employee not found.</p>;
+    return (
+      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+        <p className="text-sm text-slate-400">Employee not found.</p>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>{employee.fullName}</CardTitle>
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={`/sub-admin/employees/${employee.id}/assess`}
-              className={cn(buttonVariants({ size: "sm" }))}
-            >
-              Submit New Assessment
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="font-heading text-xl text-slate-900">
+            {employee.fullName}
+          </h2>
+          <p className="mt-0.5 text-xs text-slate-400">
+            {employee.department} · {employee.jobRole} · {employee.site}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button size="sm" asChild>
+            <Link href={`/sub-admin/employees/${employee.id}/assess`}>
+              Submit Assessment
             </Link>
-            <Link
-              href={`/sub-admin/employees/${employee.id}/report`}
-              className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-            >
-              View Full Report
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/sub-admin/employees/${employee.id}/report`}>
+              View Report
             </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Profile info */}
+      <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Department
+            </p>
+            <p className="mt-0.5 text-slate-700">{employee.department}</p>
           </div>
-        </CardHeader>
-        <CardContent className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <p>
-            <span className="text-slate-500">Department:</span> {employee.department}
-          </p>
-          <p>
-            <span className="text-slate-500">Job Role:</span> {employee.jobRole}
-          </p>
-          <p>
-            <span className="text-slate-500">Phone:</span> {employee.phoneNumber}
-          </p>
-          <p>
-            <span className="text-slate-500">Site:</span> {employee.site}
-          </p>
-          <p>
-            <span className="text-slate-500">Enrolled:</span> {formatDate(employee.createdAt)}
-          </p>
-          <p>
-            <span className="text-slate-500">Last Assessed:</span> {formatDate(employee.report?.lastAssessedAt)}
-          </p>
-        </CardContent>
-      </Card>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Job Role
+            </p>
+            <p className="mt-0.5 text-slate-700">{employee.jobRole}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Phone
+            </p>
+            <p className="mt-0.5 text-slate-700">{employee.phoneNumber}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Site
+            </p>
+            <p className="mt-0.5 text-slate-700">{employee.site}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Enrolled
+            </p>
+            <p className="mt-0.5 text-slate-700">
+              {formatDate(employee.createdAt)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              Last Assessed
+            </p>
+            <p className="mt-0.5 text-slate-700">
+              {formatDate(employee.report?.lastAssessedAt)}
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-slate-500">Total Assessments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-semibold">{employee.report?.totalSubmissions ?? 0}</p>
-          </CardContent>
-        </Card>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Total Assessments
+          </p>
+          <p className="font-heading text-2xl tracking-tight text-slate-900">
+            {employee.report?.totalSubmissions ?? 0}
+          </p>
+        </div>
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Average Score
+          </p>
+          <ScoreBadge score={employee.report?.averageScore ?? null} />
+        </div>
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Latest Remark
+          </p>
+          <RemarkBadge
+            remarkScore={employee.report?.latestRemarkScore ?? null}
+            remark={employee.report?.latestRemark ?? null}
+          />
+        </div>
+        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
+            Trend
+          </p>
+          <TrendIndicator trend={employee.report?.trend ?? "stable"} />
+        </div>
+      </div>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-slate-500">Average Score</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScoreBadge score={employee.report?.averageScore ?? null} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-slate-500">Latest Remark</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <RemarkBadge
-              remarkScore={employee.report?.latestRemarkScore ?? null}
-              remark={employee.report?.latestRemark ?? null}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-slate-500">Trend</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <TrendIndicator trend={employee.report?.trend ?? "stable"} />
-          </CardContent>
-        </Card>
-      </section>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>Assessment History</CardTitle>
+      {/* Assessment history */}
+      <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-slate-800">
+              Assessment History
+            </p>
+            <p className="text-xs text-slate-400">
+              {employee.submissions.length} total submissions
+            </p>
+          </div>
           <a
             href={`/api/sub-admin/employees/${employee.id}/export/csv`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+            className="text-[11px] font-medium text-violet-600 hover:text-violet-700"
           >
             Export CSV
           </a>
-        </CardHeader>
-        <CardContent>
-          {employee.submissions.length === 0 ? (
-            <p className="text-sm text-slate-500">No assessments submitted yet.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-left text-slate-600">
-                  <tr>
-                    <th className="px-3 py-2">Date</th>
-                    <th className="px-3 py-2">Score</th>
-                    <th className="px-3 py-2">Remark</th>
-                    <th className="px-3 py-2">Submitted By</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employee.submissions.map((submission) => (
-                    <tr key={submission.id} className="border-t border-slate-200">
-                      <td className="px-3 py-2">{formatDate(submission.submittedAt)}</td>
-                      <td className="px-3 py-2">
-                        <ScoreBadge score={submission.totalScore} />
-                      </td>
-                      <td className="px-3 py-2">
-                        <RemarkBadge remarkScore={submission.remarkScore} remark={submission.remark} />
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {submission.subAdmin.name || submission.subAdmin.email}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+        {employee.submissions.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-slate-400">
+            No assessments submitted yet.
+          </p>
+        ) : (
+          <div className="divide-y divide-slate-100/80">
+            {employee.submissions.map((submission) => (
+              <div
+                key={submission.id}
+                className="flex items-center gap-4 px-4 py-2.5 hover:bg-slate-50/50 transition-colors"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-slate-700">
+                    {formatDate(submission.submittedAt)}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    by {submission.subAdmin.name || submission.subAdmin.email}
+                  </p>
+                </div>
+                <div className="hidden sm:flex items-center gap-4 shrink-0">
+                  <ScoreBadge score={submission.totalScore} />
+                  <RemarkBadge
+                    remarkScore={submission.remarkScore}
+                    remark={submission.remark}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

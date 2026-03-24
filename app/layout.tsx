@@ -4,8 +4,8 @@ import "./globals.css";
 import { Geist, Prata } from "next/font/google";
 import { cn } from "@/lib/utils";
 
-  const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-  const prata = Prata({weight:'400',subsets:['latin'],variable:'--font-heading'});
+  const geist = Geist({subsets:['latin'],variable:'--font-sans'}); // all normal text, including body and labels.
+  const prata = Prata({weight:'400',subsets:['latin'],variable:'--font-heading'}); // for heading and numbers in stats cards. 
 
 export const metadata: Metadata = {
   title: "SwapOut",

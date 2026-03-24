@@ -1,12 +1,37 @@
+"use client";
+
+import {
+  Shield,
+  Menu,
+  X,
+  ChevronRight,
+  LayoutDashboard,
+  Users,
+  ShieldAlert,
+  FileText,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+
+const iconMap: Record<string, LucideIcon> = {
+  LayoutDashboard,
+  Users,
+  ShieldAlert,
+  FileText,
+  Settings,
+};
 
 type NavItem = {
   label: string;
   href: string;
+  icon?: string;
   disabled?: boolean;
+  badge?: number | string | null;
 };
 
 type AppShellProps = {
@@ -28,46 +53,134 @@ export function AppShell({
   children,
   banner,
 }: AppShellProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-6">
-          <div className="space-y-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">SwapOut</p>
-            <h1 className="text-lg font-semibold text-slate-900">{title}</h1>
-            {subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}
+    <div className="flex h-screen overflow-hidden bg-slate-50">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-30 flex w-56 flex-col border-r border-slate-200/80 bg-white transition-transform duration-200",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:relative lg:translate-x-0 lg:z-auto",
+        )}
+      >
+        {/* Logo */}
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 px-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600">
+              <Shield className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="font-heading text-sm tracking-tight text-slate-800">
+              SwapOut
+            </span>
           </div>
-          <div className="flex items-center gap-3">
-            <Badge variant="secondary">{roleLabel}</Badge>
-            {actions}
-          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 lg:hidden"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
-      </header>
 
-      {banner ? <div className="mx-auto w-full max-w-7xl px-4 pt-4 md:px-6">{banner}</div> : null}
+        {/* Role pill */}
+        <div className="px-3 pt-4 pb-2">
+          <span className="inline-flex items-center gap-1.5 rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-violet-700 border border-violet-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
+            {roleLabel}
+          </span>
+        </div>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-4 px-4 py-4 md:grid-cols-[220px_1fr] md:gap-6 md:px-6 md:py-6">
-        <aside className="rounded-xl border border-slate-200 bg-white p-2">
-          <nav className="grid grid-cols-2 gap-2 md:grid-cols-1">
-            {navItems.map((item) => (
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+          {navItems.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/" && pathname.startsWith(item.href + "/")) ||
+              (item.href === "/sub-admin/dashboard" &&
+                pathname === "/sub-admin/dashboard");
+            const Icon = item.icon ? iconMap[item.icon] : undefined;
+
+            return (
               <Link
                 key={item.href}
                 href={item.disabled ? "#" : item.href}
                 aria-disabled={item.disabled}
+                onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-colors",
-                  item.disabled
-                    ? "pointer-events-none cursor-not-allowed bg-slate-100 text-slate-400"
-                    : "hover:bg-slate-100 hover:text-slate-900",
+                  "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-150",
+                  isActive
+                    ? "bg-violet-50 text-violet-700"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                  item.disabled && "pointer-events-none opacity-35",
                 )}
               >
-                {item.label}
+                {Icon && (
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0",
+                      isActive
+                        ? "text-violet-600"
+                        : "text-slate-400 group-hover:text-slate-600",
+                    )}
+                  />
+                )}
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge != null && (
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-100 px-1 font-mono text-[10px] font-bold text-violet-700">
+                    {item.badge}
+                  </span>
+                )}
+                {isActive && (
+                  <ChevronRight className="h-3 w-3 text-violet-400" />
+                )}
               </Link>
-            ))}
-          </nav>
-        </aside>
+            );
+          })}
+        </nav>
 
-        <main className="space-y-4">{children}</main>
+        {/* Bottom user section */}
+        <div className="border-t border-slate-200/80 p-3">
+          {subtitle && (
+            <p className="mb-2 px-2 text-[11px] text-slate-400 truncate">
+              {subtitle}
+            </p>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">{actions}</div>
+        </div>
+      </aside>
+
+      {/* Main area */}
+      <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        {/* Topbar */}
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white px-4 lg:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 lg:hidden"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+            <h1 className="font-heading text-lg text-slate-900">{title}</h1>
+          </div>
+        </header>
+
+        {/* Banner */}
+        {banner && <div className="px-4 pt-4 lg:px-6">{banner}</div>}
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto px-4 py-5 lg:px-6 lg:py-6 space-y-5">
+          {children}
+        </main>
       </div>
     </div>
   );

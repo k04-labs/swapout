@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Clock } from "lucide-react";
 import { getSubAdminFromServer } from "@/lib/sub-admin-auth";
 
 export default async function SubAdminPendingPage() {
@@ -18,27 +18,28 @@ export default async function SubAdminPendingPage() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Pending Approval</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm text-slate-600">
-        <p>Your account is registered and waiting for SuperAdmin approval.</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          <button
-            disabled
-            className="h-10 rounded-md border border-slate-200 bg-slate-100 text-slate-400"
-          >
-            Add Employee (Locked)
-          </button>
-          <button
-            disabled
-            className="h-10 rounded-md border border-slate-200 bg-slate-100 text-slate-400"
-          >
-            Start Assessment (Locked)
-          </button>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="mx-auto max-w-md py-16 text-center">
+      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 border border-amber-100">
+        <Clock className="h-5 w-5 text-amber-600" />
+      </div>
+      <h2 className="font-heading text-xl text-slate-900">Pending Approval</h2>
+      <p className="mt-2 text-sm text-slate-500">
+        Your account is registered and waiting for SuperAdmin approval.
+      </p>
+      <div className="mt-6 grid gap-2 sm:grid-cols-2">
+        <button
+          disabled
+          className="h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
+        >
+          Add Employee (Locked)
+        </button>
+        <button
+          disabled
+          className="h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
+        >
+          Start Assessment (Locked)
+        </button>
+      </div>
+    </div>
   );
 }
