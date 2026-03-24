@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { SubAdminLogoutButton } from "@/components/auth/sub-admin-logout-button";
 import { Badge } from "@/components/ui/badge";
-import { getSubAdminFromServer } from "@/lib/sub-admin-auth";
+import { getSubAdminFromServer, getSubAdminRedirect } from "@/lib/sub-admin-auth";
 
 export default async function SubAdminLayout({
   children,
@@ -49,8 +49,11 @@ export default async function SubAdminLayout({
       navItems={[
         { label: "Dashboard", href: "/sub-admin/dashboard", disabled: !isApproved },
         { label: "Employees", href: "/sub-admin/employees", disabled: !isApproved },
-        { label: "Reports", href: "/sub-admin/reports", disabled: !isApproved },
-        { label: "Pending State", href: "/sub-admin/pending", disabled: false },
+        {
+          label: isApproved ? "Status" : "Pending Status",
+          href: getSubAdminRedirect(subAdmin.approvalStatus),
+          disabled: false,
+        },
       ]}
     >
       {children}

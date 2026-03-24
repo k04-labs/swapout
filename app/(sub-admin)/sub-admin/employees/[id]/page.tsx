@@ -1,8 +1,17 @@
 import { redirect } from "next/navigation";
-import { DashboardOverview } from "@/components/sub-admin/dashboard-overview";
+import { EmployeeDetailClient } from "@/components/sub-admin/employee-detail-client";
 import { getSubAdminFromServer, getSubAdminRedirect } from "@/lib/sub-admin-auth";
 
-export default async function SubAdminDashboardPage() {
+type PageParams = {
+  id: string;
+};
+
+export default async function SubAdminEmployeeDetailPage({
+  params,
+}: {
+  params: Promise<PageParams>;
+}) {
+  const { id } = await params;
   const subAdmin = await getSubAdminFromServer();
 
   if (!subAdmin) {
@@ -13,5 +22,5 @@ export default async function SubAdminDashboardPage() {
     redirect(getSubAdminRedirect(subAdmin.approvalStatus));
   }
 
-  return <DashboardOverview />;
+  return <EmployeeDetailClient employeeId={id} />;
 }

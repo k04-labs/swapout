@@ -17,12 +17,14 @@
     "better-auth": "^1.3.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "csv-stringify": "^6.7.0",
     "dotenv": "^17.3.1",
     "jose": "^6.1.2",
     "lucide-react": "^0.511.0",
     "next": "16.2.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "recharts": "^3.8.0",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
