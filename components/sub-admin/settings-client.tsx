@@ -36,9 +36,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       setSuccess(true);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update profile.",
-      );
+      setError(err instanceof Error ? err.message : "Failed to update profile.");
     } finally {
       setSaving(false);
     }
@@ -47,20 +45,15 @@ export function SettingsClient({ user }: SettingsClientProps) {
   return (
     <div className="space-y-6">
       {/* Profile section */}
-      <div className="rounded-xl border border-slate-200/80 bg-white">
+      <div className="rounded-md border border-slate-200/80 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
           <h3 className="text-sm font-medium text-slate-800">Profile</h3>
-          <p className="text-xs text-slate-400">
-            Manage your account information
-          </p>
+          <p className="text-xs text-slate-400">Manage your account information</p>
         </div>
         <div className="p-5">
           <form onSubmit={onSubmit} className="max-w-md space-y-4">
             <div className="space-y-1.5">
-              <Label
-                htmlFor="name"
-                className="text-xs font-medium text-slate-600"
-              >
+              <Label htmlFor="name" className="text-xs font-medium text-slate-600">
                 Full Name
               </Label>
               <Input
@@ -68,34 +61,25 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
-                className="h-9 border-slate-200 bg-slate-50/50"
+                className="border-slate-200 bg-slate-50/50"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs font-medium text-slate-600"
-              >
+              <Label htmlFor="email" className="text-xs font-medium text-slate-600">
                 Email
               </Label>
               <Input
                 id="email"
                 value={user.email}
                 disabled
-                className="h-9 border-slate-200 bg-slate-100 text-slate-500"
+                className="border-slate-200 bg-slate-100 text-slate-500"
               />
-              <p className="text-[10px] text-slate-400">
-                Email cannot be changed
-              </p>
+              <p className="text-[10px] text-slate-400">Email cannot be changed</p>
             </div>
 
             {error && <p className="text-xs text-red-600">{error}</p>}
-            {success && (
-              <p className="text-xs text-emerald-600">
-                Profile updated successfully.
-              </p>
-            )}
+            {success && <p className="text-xs text-emerald-600">Profile updated successfully.</p>}
 
             <Button type="submit" size="sm" disabled={saving}>
               {saving ? "Saving..." : "Save Changes"}
@@ -105,7 +89,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
 
       {/* Appearance section */}
-      <div className="rounded-xl border border-slate-200/80 bg-white">
+      <div className="rounded-md border border-slate-200/80 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
           <h3 className="text-sm font-medium text-slate-800">Appearance</h3>
           <p className="text-xs text-slate-400">Customize the look and feel</p>
@@ -114,7 +98,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              className="flex h-20 w-28 flex-col items-center justify-center rounded-lg border-2 border-violet-500 bg-white p-2 text-xs font-medium text-slate-700 transition-colors"
+              className="flex h-20 w-28 flex-col items-center justify-center rounded-md border-2 border-violet-500 bg-white p-2 text-xs font-medium text-slate-700 transition-colors"
             >
               <div className="mb-1.5 flex gap-0.5">
                 <div className="h-3 w-5 rounded-sm bg-white border border-slate-200" />
@@ -125,7 +109,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <button
               type="button"
               disabled
-              className="flex h-20 w-28 flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs font-medium text-slate-400 opacity-60 cursor-not-allowed transition-colors"
+              className="flex h-20 w-28 flex-col items-center justify-center rounded-md border border-slate-200 bg-slate-50 p-2 text-xs font-medium text-slate-400 opacity-60 cursor-not-allowed transition-colors"
             >
               <div className="mb-1.5 flex gap-0.5">
                 <div className="h-3 w-5 rounded-sm bg-slate-700" />

@@ -205,14 +205,14 @@ export function EmployeesClient() {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+        <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
           <p className="text-sm text-slate-400">Loading employees...</p>
         </div>
       ) : null}
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
       {!loading && employees.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
+        <div className="rounded-md border border-dashed border-slate-200 bg-white p-8 text-center">
           <p className="text-sm text-slate-500">
             No employees yet. Add your first employee to begin assessments.
           </p>
@@ -220,7 +220,7 @@ export function EmployeesClient() {
       ) : null}
 
       {employees.length > 0 ? (
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -330,7 +330,7 @@ export function EmployeesClient() {
       ) : null}
 
       {formOpen ? (
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
           <div className="border-b border-slate-100 px-5 py-3">
             <p className="text-sm font-medium text-slate-800">
               {editingEmployee ? "Edit Employee" : "Add Employee"}
@@ -355,7 +355,7 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="h-9 border-slate-200 bg-slate-50/50"
+                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
@@ -376,7 +376,7 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="h-9 border-slate-200 bg-slate-50/50"
+                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
@@ -397,7 +397,7 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="h-9 border-slate-200 bg-slate-50/50"
+                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
@@ -418,7 +418,7 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="h-9 border-slate-200 bg-slate-50/50"
+                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 
@@ -439,7 +439,7 @@ export function EmployeesClient() {
                     }))
                   }
                   required
-                  className="h-9 border-slate-200 bg-slate-50/50"
+                  className="border-slate-200 bg-slate-50/50"
                 />
               </div>
 

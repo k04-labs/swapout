@@ -129,7 +129,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">Loading report...</p>
       </div>
     );
@@ -137,7 +137,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/40 p-6">
+      <div className="rounded-md border border-red-200/80 bg-red-50/40 p-6">
         <p className="text-sm text-red-600">{error}</p>
       </div>
     );
@@ -145,7 +145,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
   if (!data) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">Report unavailable.</p>
       </div>
     );
@@ -184,7 +184,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
       {/* Stat cards */}
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Total Submissions
           </p>
@@ -192,7 +192,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
             {data.report?.totalSubmissions ?? 0}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Latest Score
           </p>
@@ -200,7 +200,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
             <ScoreBadge score={data.report?.latestScore ?? null} />
           </div>
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Average Score
           </p>
@@ -208,7 +208,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
             <ScoreBadge score={data.report?.averageScore ?? null} />
           </div>
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Latest Remark
           </p>
@@ -222,7 +222,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
       </section>
 
       {/* Trend summary */}
-      <div className="rounded-xl border border-slate-200/80 bg-white p-5">
+      <div className="rounded-md border border-slate-200/80 bg-white p-5">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
           Trend Summary
         </h3>
@@ -237,13 +237,13 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
       {/* Charts */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-5">
+        <div className="rounded-md border border-slate-200/80 bg-white p-5">
           <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Score Trend
           </h3>
           <ScoreTrendChart data={trendData} />
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-5">
+        <div className="rounded-md border border-slate-200/80 bg-white p-5">
           <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Competency Breakdown
           </h3>
@@ -252,7 +252,7 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Assessment history */}
-      <div className="rounded-xl border border-slate-200/80 bg-white">
+      <div className="rounded-md border border-slate-200/80 bg-white">
         <div className="border-b border-slate-100 px-5 py-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
             Assessment History

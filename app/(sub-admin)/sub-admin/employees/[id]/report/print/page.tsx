@@ -1,6 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { getSubAdminFromServer, getSubAdminRedirect } from "@/lib/sub-admin-auth";
+import {
+  getSubAdminFromServer,
+  getSubAdminRedirect,
+} from "@/lib/sub-admin-auth";
 
 type PageParams = {
   id: string;
@@ -65,50 +68,74 @@ export default async function SubAdminEmployeeReportPrintPage({
     <div className="mx-auto w-full max-w-4xl space-y-6 bg-white px-4 py-6 text-slate-900 print:max-w-none print:px-0 print:py-0">
       <header className="border-b border-slate-200 pb-4">
         <h1 className="text-2xl font-bold">SwapOut Employee Progress Report</h1>
-        <p className="mt-1 text-sm text-slate-600">Generated on {formatDate(new Date())}</p>
+        <p className="mt-1 text-sm text-slate-600">
+          Generated on {formatDate(new Date())}
+        </p>
       </header>
 
-      <section className="grid gap-3 rounded-lg border border-slate-200 p-4 text-sm sm:grid-cols-2">
+      <section className="grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-2">
         <p>
-          <span className="font-semibold text-slate-700">Employee:</span> {employee.fullName}
+          <span className="font-semibold text-slate-700">Employee:</span>{" "}
+          {employee.fullName}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Department:</span> {employee.department}
+          <span className="font-semibold text-slate-700">Department:</span>{" "}
+          {employee.department}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Job Role:</span> {employee.jobRole}
+          <span className="font-semibold text-slate-700">Job Role:</span>{" "}
+          {employee.jobRole}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Phone:</span> {employee.phoneNumber}
+          <span className="font-semibold text-slate-700">Phone:</span>{" "}
+          {employee.phoneNumber}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Site:</span> {employee.site}
+          <span className="font-semibold text-slate-700">Site:</span>{" "}
+          {employee.site}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Enrolled:</span> {formatDate(employee.createdAt)}
+          <span className="font-semibold text-slate-700">Enrolled:</span>{" "}
+          {formatDate(employee.createdAt)}
         </p>
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Total Submissions</p>
-          <p className="mt-2 text-xl font-semibold">{employee.report?.totalSubmissions ?? 0}</p>
+        <div className="rounded-md border border-slate-200 p-4">
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Total Submissions
+          </p>
+          <p className="mt-2 text-xl font-semibold">
+            {employee.report?.totalSubmissions ?? 0}
+          </p>
         </div>
-        <div className="rounded-lg border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Latest Score</p>
-          <p className="mt-2 text-xl font-semibold">{formatScore(employee.report?.latestScore)}</p>
+        <div className="rounded-md border border-slate-200 p-4">
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Latest Score
+          </p>
+          <p className="mt-2 text-xl font-semibold">
+            {formatScore(employee.report?.latestScore)}
+          </p>
         </div>
-        <div className="rounded-lg border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Average Score</p>
-          <p className="mt-2 text-xl font-semibold">{formatScore(employee.report?.averageScore)}</p>
+        <div className="rounded-md border border-slate-200 p-4">
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Average Score
+          </p>
+          <p className="mt-2 text-xl font-semibold">
+            {formatScore(employee.report?.averageScore)}
+          </p>
         </div>
-        <div className="rounded-lg border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Trend</p>
-          <p className="mt-2 text-xl font-semibold capitalize">{employee.report?.trend ?? "Stable"}</p>
+        <div className="rounded-md border border-slate-200 p-4">
+          <p className="text-xs uppercase tracking-wide text-slate-500">
+            Trend
+          </p>
+          <p className="mt-2 text-xl font-semibold capitalize">
+            {employee.report?.trend ?? "Stable"}
+          </p>
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200">
+      <section className="rounded-md border border-slate-200">
         <div className="border-b border-slate-200 px-4 py-3">
           <h2 className="text-lg font-semibold">Assessment History</h2>
         </div>
@@ -132,8 +159,12 @@ export default async function SubAdminEmployeeReportPrintPage({
               ) : (
                 employee.submissions.map((submission) => (
                   <tr key={submission.id} className="border-t border-slate-200">
-                    <td className="px-3 py-2">{formatDate(submission.submittedAt)}</td>
-                    <td className="px-3 py-2">{formatScore(submission.totalScore)}</td>
+                    <td className="px-3 py-2">
+                      {formatDate(submission.submittedAt)}
+                    </td>
+                    <td className="px-3 py-2">
+                      {formatScore(submission.totalScore)}
+                    </td>
                     <td className="px-3 py-2">
                       {submission.remarkScore} • {submission.remark}
                     </td>

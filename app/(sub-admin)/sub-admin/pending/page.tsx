@@ -29,13 +29,13 @@ export default async function SubAdminPendingPage() {
       <div className="mt-6 grid gap-2 sm:grid-cols-2">
         <button
           disabled
-          className="h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
+          className="h-9 rounded-md border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
         >
           Add Employee (Locked)
         </button>
         <button
           disabled
-          className="h-9 rounded-lg border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
+          className="h-9 rounded-md border border-slate-200 bg-slate-50 text-xs font-medium text-slate-400"
         >
           Start Assessment (Locked)
         </button>

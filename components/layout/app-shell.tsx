@@ -112,7 +112,7 @@ export function AppShell({
         {/* Logo */}
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-md bg-violet-600">
               <Shield className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="font-heading text-sm tracking-tight text-slate-800">
@@ -147,7 +147,7 @@ export function AppShell({
                 aria-disabled={item.disabled}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-100",
+                  "group flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors duration-100",
                   isActive
                     ? "bg-slate-100/80 text-slate-900"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
@@ -188,7 +188,7 @@ export function AppShell({
         <div className="border-t border-slate-100 p-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition-colors outline-none">
+              <button className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left hover:bg-slate-50 transition-colors outline-none">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600">
                   {userName
                     ? userName

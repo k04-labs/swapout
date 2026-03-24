@@ -97,7 +97,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">Loading employee details...</p>
       </div>
     );
@@ -105,7 +105,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/40 p-6">
+      <div className="rounded-md border border-red-200/80 bg-red-50/40 p-6">
         <p className="text-sm text-red-600">{error}</p>
       </div>
     );
@@ -114,7 +114,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
   const employee = data?.employee;
   if (!employee) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">Employee not found.</p>
       </div>
     );
@@ -147,7 +147,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Profile info */}
-      <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+      <div className="rounded-md border border-slate-200/80 bg-white p-4">
         <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -194,7 +194,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Total Assessments
           </p>
@@ -202,13 +202,13 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
             {employee.report?.totalSubmissions ?? 0}
           </p>
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Average Score
           </p>
           <ScoreBadge score={employee.report?.averageScore ?? null} />
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Latest Remark
           </p>
@@ -217,7 +217,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
             remark={employee.report?.latestRemark ?? null}
           />
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
             Trend
           </p>
@@ -226,7 +226,7 @@ export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
       </div>
 
       {/* Assessment history */}
-      <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+      <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div>
             <p className="text-sm font-medium text-slate-800">

@@ -96,7 +96,7 @@ function avColor(name: string) {
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-md">
+    <div className="rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs shadow-md">
       <p className="font-medium text-slate-700">{label}</p>
       <p className="text-slate-500">{payload[0]?.value}</p>
     </div>
@@ -119,7 +119,7 @@ function DashboardOverviewSkeleton() {
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={`metric-skeleton-${index}`}
-            className="rounded-xl border border-slate-200/80 bg-white p-4"
+            className="rounded-md border border-slate-200/80 bg-white p-4"
           >
             <Skeleton className="h-3 w-24 mb-3" />
             <Skeleton className="h-7 w-16" />
@@ -129,12 +129,12 @@ function DashboardOverviewSkeleton() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white p-4">
           <Skeleton className="h-4 w-32 mb-1" />
           <Skeleton className="h-3 w-52 mb-4" />
           <Skeleton className="h-40 w-full" />
         </div>
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <Skeleton className="h-4 w-40 mb-1" />
           <Skeleton className="h-3 w-48 mb-4" />
           <Skeleton className="h-40 w-full" />
@@ -246,7 +246,7 @@ export function DashboardOverview() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-6">
+      <div className="rounded-md border border-slate-200/80 bg-white p-6">
         <p className="text-sm font-medium text-slate-800">
           Unable to load dashboard
         </p>
@@ -319,7 +319,7 @@ export function DashboardOverview() {
         {metrics.map((metric) => (
           <div
             key={metric.label}
-            className="rounded-xl border border-slate-200/80 bg-white p-4 hover:shadow-sm transition-shadow"
+            className="rounded-md border border-slate-200/80 bg-white p-4 hover:shadow-sm transition-shadow"
           >
             <div className="mb-3 flex items-start justify-between">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
@@ -343,7 +343,7 @@ export function DashboardOverview() {
       {/* Charts row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Score trend */}
-        <div className="lg:col-span-2 rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white p-4">
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-slate-800">Score Trend</p>
@@ -358,7 +358,7 @@ export function DashboardOverview() {
             )}
           </div>
           {scoreTrendData.length === 0 ? (
-            <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-slate-200 text-sm text-slate-400">
+            <div className="flex h-40 items-center justify-center rounded-md border border-dashed border-slate-200 text-sm text-slate-400">
               No score trend data yet.
             </div>
           ) : (
@@ -412,7 +412,7 @@ export function DashboardOverview() {
         </div>
 
         {/* Recently added employees */}
-        <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="rounded-md border border-slate-200/80 bg-white overflow-hidden">
           <div className="border-b border-slate-100 px-4 py-3">
             <p className="text-sm font-medium text-slate-800">Recently Added</p>
             <p className="text-xs text-slate-400">Newest employee profiles</p>
@@ -457,7 +457,7 @@ export function DashboardOverview() {
       {/* Bottom row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Recent submissions */}
-        <div className="lg:col-span-2 rounded-xl border border-slate-200/80 bg-white overflow-hidden">
+        <div className="lg:col-span-2 rounded-md border border-slate-200/80 bg-white overflow-hidden">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <div>
               <p className="text-sm font-medium text-slate-800">
@@ -540,7 +540,7 @@ export function DashboardOverview() {
         </div>
 
         {/* Submission volume + stats */}
-        <div className="rounded-xl border border-slate-200/80 bg-white p-4">
+        <div className="rounded-md border border-slate-200/80 bg-white p-4">
           <div className="mb-4">
             <p className="text-sm font-medium text-slate-800">
               Submission Volume
@@ -549,7 +549,7 @@ export function DashboardOverview() {
           </div>
           <div className="h-40">
             {volumeData.length === 0 ? (
-              <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-slate-200 text-sm text-slate-400">
+              <div className="flex h-full items-center justify-center rounded-md border border-dashed border-slate-200 text-sm text-slate-400">
                 Not enough data.
               </div>
             ) : (

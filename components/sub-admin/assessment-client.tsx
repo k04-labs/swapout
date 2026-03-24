@@ -136,7 +136,7 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">
           Preparing assessment session...
         </p>
@@ -146,7 +146,7 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200/80 bg-red-50/40 p-6">
+      <div className="rounded-md border border-red-200/80 bg-red-50/40 p-6">
         <p className="text-sm text-red-600">{error}</p>
       </div>
     );
@@ -154,7 +154,7 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
 
   if (!sessionId || questions.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200/80 bg-white p-8 text-center">
+      <div className="rounded-md border border-slate-200/80 bg-white p-8 text-center">
         <p className="text-sm text-slate-400">
           No questions available for this assessment.
         </p>
@@ -194,7 +194,7 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
           return (
             <div
               key={question.questionId}
-              className={`rounded-xl border bg-white p-4 transition-all ${
+              className={`rounded-md border bg-white p-4 transition-all ${
                 isAnswered ? "border-emerald-200/80" : "border-slate-200/80"
               }`}
             >
@@ -216,7 +216,7 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
                   return (
                     <label
                       key={option.id}
-                      className={`flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2.5 transition-all ${
+                      className={`flex cursor-pointer items-start gap-2.5 rounded-md border px-3 py-2.5 transition-all ${
                         isSelected
                           ? "border-violet-200 bg-violet-50/50"
                           : "border-slate-200/80 hover:bg-slate-50"

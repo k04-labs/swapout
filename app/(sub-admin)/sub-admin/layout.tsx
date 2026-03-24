@@ -19,12 +19,12 @@ export default async function SubAdminLayout({
 
   const banner =
     subAdmin.approvalStatus === "PENDING" ? (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
         Your account is pending approval. Dashboard navigation is visible but
         locked.
       </div>
     ) : subAdmin.approvalStatus === "REJECTED" ? (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+      <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
         Your account access is currently rejected. Contact a SuperAdmin for
         re-approval.
       </div>
