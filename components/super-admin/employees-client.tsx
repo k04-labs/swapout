@@ -2,10 +2,36 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Download, FileText, Search } from "lucide-react";
+import {
+  Users,
+  Search,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Download,
+  Eye,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  MoreHorizontal,
+  Mail,
+  Phone,
+  Building2,
+  Calendar,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -15,11 +41,34 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RemarkBadge } from "@/components/sub-admin/remark-badge";
-import { ScoreBadge } from "@/components/sub-admin/score-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 const ALL_FILTER = "__all__";
+const ITEMS_PER_PAGE = 10;
 
 type Employee = {
   id: string;
@@ -43,6 +92,7 @@ type Employee = {
     latestRemarkScore: number | null;
     latestRemark: string | null;
     averageScore: number | null;
+    trend: "improving" | "declining" | "stable" | null;
     lastAssessedAt: string | null;
   } | null;
   _count: {
@@ -74,32 +124,293 @@ function formatDate(value: string | null | undefined): string {
   });
 }
 
-function EmployeesSkeleton() {
+function initials(name: string) {
+  const p = name.trim().split(" ");
+  return p.length >= 2
+    ? (p[0][0] + p[p.length - 1][0]).toUpperCase()
+    : name.slice(0, 2).toUpperCase();
+}
+
+const AV_COLORS = [
+  "bg-emerald-500/20 text-emerald-400",
+  "bg-blue-500/20 text-blue-400",
+  "bg-purple-500/20 text-purple-400",
+  "bg-amber-500/20 text-amber-400",
+  "bg-rose-500/20 text-rose-400",
+  "bg-cyan-500/20 text-cyan-400",
+];
+
+function avColor(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+  return AV_COLORS[Math.abs(h) % AV_COLORS.length];
+}
+
+function scoreColor(score: number) {
+  if (score >= 4) return "text-emerald-400";
+  if (score >= 3) return "text-blue-400";
+  if (score >= 2) return "text-amber-400";
+  return "text-rose-400";
+}
+
+function scoreBadgeVariant(score: number) {
+  if (score >= 4)
+    return {
+      label: "Excellent",
+      cls: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    };
+  if (score >= 3)
+    return {
+      label: "Good",
+      cls: "bg-blue-500/20 text-blue-400 border-blue-500/30",
+    };
+  if (score >= 2)
+    return {
+      label: "Fair",
+      cls: "bg-amber-500/20 text-amber-400 border-amber-500/30",
+    };
+  return {
+    label: "Needs Improvement",
+    cls: "bg-rose-500/20 text-rose-400 border-rose-500/30",
+  };
+}
+
+function TrendIcon({ trend }: { trend: string | null | undefined }) {
+  if (trend === "improving")
+    return <TrendingUp className="size-3.5 text-emerald-400" />;
+  if (trend === "declining")
+    return <TrendingDown className="size-3.5 text-rose-400" />;
+  return <Minus className="size-3.5 text-muted-foreground" />;
+}
+
+function trendLabel(trend: string | null | undefined) {
+  if (trend === "improving") return "Improving";
+  if (trend === "declining") return "Declining";
+  return "Stable";
+}
+
+/* ---------- Employee Report Dialog ---------- */
+function EmployeeReportDialog({ employee }: { employee: Employee }) {
+  const avgScore = employee.report?.averageScore ?? 0;
+  const badge = scoreBadgeVariant(avgScore);
+  const submissions = employee._count.submissions;
+  const trend = employee.report?.trend ?? "stable";
+
   return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-5 w-56" />
-        <Skeleton className="h-3 w-72" />
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={`filters-${index}`} className="h-9 w-full" />
-          ))}
+    <DialogContent className="max-w-2xl">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-3">
+          <Avatar
+            className={cn(
+              "size-10 ring-2 ring-border/50",
+              avColor(employee.fullName),
+            )}
+          >
+            <AvatarFallback
+              className={cn(
+                "bg-transparent font-semibold",
+                avColor(employee.fullName),
+              )}
+            >
+              {initials(employee.fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <span className="block">{employee.fullName}</span>
+            <span className="text-sm font-normal text-muted-foreground">
+              {employee.department}
+            </span>
+          </div>
+        </DialogTitle>
+        <DialogDescription>
+          Employee performance report and assessment history
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-6 py-4">
+        {/* Contact Info */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <Mail className="size-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              {employee.phoneNumber}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Phone className="size-4 text-muted-foreground" />
+            <span className="text-muted-foreground">{employee.site}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Building2 className="size-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              {employee.subAdmin.email}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Users className="size-4 text-muted-foreground" />
+            <span className="text-muted-foreground">
+              Managed by {employee.subAdmin.name}
+            </span>
+          </div>
         </div>
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Skeleton key={`rows-${index}`} className="h-10 w-full" />
-        ))}
-      </CardContent>
-    </Card>
+
+        {/* Score Overview */}
+        <Card className="border-border/50 bg-muted/30">
+          <CardContent className="p-4">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="text-center">
+                <p
+                  className={cn(
+                    "text-3xl font-bold font-mono",
+                    scoreColor(avgScore),
+                  )}
+                >
+                  {avgScore.toFixed(1)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Average Score
+                </p>
+                <Badge className={cn("mt-2 text-[10px]", badge.cls)}>
+                  {badge.label}
+                </Badge>
+              </div>
+              <div className="text-center">
+                <p className="text-3xl font-bold font-mono text-foreground">
+                  {submissions}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Total Assessments
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                  <TrendIcon trend={trend} />
+                  <span
+                    className={cn(
+                      "text-sm font-semibold",
+                      trend === "improving"
+                        ? "text-emerald-400"
+                        : trend === "declining"
+                          ? "text-rose-400"
+                          : "text-muted-foreground",
+                    )}
+                  >
+                    {trendLabel(trend)}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Performance Trend
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Key dates */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground mb-3">
+            Key Information
+          </h4>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Last Assessed
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(employee.report?.lastAssessedAt)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "text-lg font-bold font-mono",
+                    scoreColor(employee.report?.latestScore ?? 0),
+                  )}
+                >
+                  {employee.report?.latestScore?.toFixed(1) ?? "N/A"}
+                </span>
+                <span className="text-xs text-muted-foreground">/5</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/50">
+              <div className="flex items-center gap-3">
+                <Calendar className="size-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Enrolled
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDate(employee.createdAt)}
+                  </p>
+                </div>
+              </div>
+              <Badge variant="outline" className="font-normal">
+                {employee.jobRole}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter className="gap-2 sm:gap-0">
+        <Button variant="outline" className="gap-2" asChild>
+          <Link href={`/super-admin/employees/${employee.id}/report`}>
+            <FileText className="size-4" />
+            Full Report
+          </Link>
+        </Button>
+        <Button variant="outline" className="gap-2" asChild>
+          <a
+            href={`/api/super-admin/export/csv?employeeId=${encodeURIComponent(employee.id)}`}
+          >
+            <Download className="size-4" />
+            Export Report
+          </a>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
 
+/* ---------- Skeleton ---------- */
+function EmployeesSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={`stat-${i}`} className="border-border/50 bg-card/50">
+            <CardContent className="p-4">
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <Card className="border-border/50 bg-card/50">
+        <CardContent className="p-4">
+          <Skeleton className="h-9 w-full" />
+        </CardContent>
+      </Card>
+      <Card className="border-border/50 bg-card/50">
+        <CardContent className="p-4 flex flex-col gap-2">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={`row-${i}`} className="h-12 w-full" />
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/* ---------- Main Component ---------- */
 export function SuperAdminEmployeesClient() {
   const [query, setQuery] = useState("");
-  const [site, setSite] = useState(ALL_FILTER);
-  const [department, setDepartment] = useState(ALL_FILTER);
   const [subAdminId, setSubAdminId] = useState(ALL_FILTER);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [data, setData] = useState<EmployeesPayload | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,23 +427,16 @@ export function SuperAdminEmployeesClient() {
         const params = new URLSearchParams();
         const normalizedQuery = query.trim();
 
-        if (normalizedQuery) {
-          params.set("q", normalizedQuery);
-        }
-        if (site !== ALL_FILTER) {
-          params.set("site", site);
-        }
-        if (department !== ALL_FILTER) {
-          params.set("department", department);
-        }
-        if (subAdminId !== ALL_FILTER) {
-          params.set("subAdminId", subAdminId);
-        }
+        if (normalizedQuery) params.set("q", normalizedQuery);
+        if (subAdminId !== ALL_FILTER) params.set("subAdminId", subAdminId);
 
-        const response = await fetch(`/api/super-admin/employees?${params.toString()}`, {
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          `/api/super-admin/employees?${params.toString()}`,
+          {
+            cache: "no-store",
+            signal: controller.signal,
+          },
+        );
 
         const payload = (await response.json()) as EmployeesPayload;
 
@@ -143,7 +447,11 @@ export function SuperAdminEmployeesClient() {
         setData(payload);
       } catch (loadError) {
         if (controller.signal.aborted) return;
-        setError(loadError instanceof Error ? loadError.message : "Failed to load employees.");
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Failed to load employees.",
+        );
       } finally {
         if (!controller.signal.aborted) {
           setLoading(false);
@@ -159,19 +467,49 @@ export function SuperAdminEmployeesClient() {
       clearTimeout(timeout);
       controller.abort();
     };
-  }, [query, site, department, subAdminId]);
+  }, [query, subAdminId]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, subAdminId]);
+
+  const employees = data?.employees ?? [];
 
   const totals = useMemo(() => {
-    const rows = data?.employees ?? [];
     return {
-      employees: rows.length,
-      submissions: rows.reduce((sum, employee) => sum + employee._count.submissions, 0),
+      employees: employees.length,
+      active: employees.filter((e) => e.isActive).length,
+      submissions: employees.reduce((sum, e) => sum + e._count.submissions, 0),
       avgScore:
-        rows.length > 0
-          ? rows.reduce((sum, employee) => sum + (employee.report?.latestScore ?? 0), 0) / rows.length
+        employees.length > 0
+          ? employees.reduce(
+              (sum, e) => sum + (e.report?.averageScore ?? 0),
+              0,
+            ) / employees.length
           : 0,
     };
-  }, [data]);
+  }, [employees]);
+
+  const totalPages = Math.max(1, Math.ceil(employees.length / ITEMS_PER_PAGE));
+  const paginatedEmployees = employees.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  const toggleSelectAll = () => {
+    if (selectedRows.length === paginatedEmployees.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(paginatedEmployees.map((e) => e.id));
+    }
+  };
+
+  const toggleSelectRow = (id: string) => {
+    setSelectedRows((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+    );
+  };
 
   if (loading && !data) {
     return <EmployeesSkeleton />;
@@ -194,201 +532,363 @@ export function SuperAdminEmployeesClient() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Employees</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="font-heading text-2xl text-foreground">{totals.employees}</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <Users className="size-6 text-primary" />
+            All Employees
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            View and manage all employees across SubAdmins
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" asChild>
+            <a
+              href={`/api/super-admin/export/csv${
+                subAdminId !== ALL_FILTER
+                  ? `?subAdminId=${encodeURIComponent(subAdminId)}`
+                  : ""
+              }`}
+            >
+              <Download className="size-4" />
+              Export
+            </a>
+          </Button>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400">
+                <Users className="size-4" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {totals.employees}
+                </p>
+                <p className="text-xs text-muted-foreground">Total Employees</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Submissions in View</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="font-heading text-2xl text-foreground">{totals.submissions}</p>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400">
+                <TrendingUp className="size-4" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {totals.active}
+                </p>
+                <p className="text-xs text-muted-foreground">Active</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Average Latest Score</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="font-heading text-2xl text-foreground">{totals.avgScore.toFixed(2)} / 5</p>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400">
+                <FileText className="size-4" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {totals.submissions}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Total Assessments
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Filter Scope</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Platform-wide visibility across all SubAdmins.</p>
+        <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+                <TrendingUp className="size-4" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold font-mono text-foreground">
+                  {totals.avgScore.toFixed(1)}
+                </p>
+                <p className="text-xs text-muted-foreground">Avg Score</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle>Platform Employees</CardTitle>
-              <CardDescription>
-                Search and audit employee progress by site, department, and SubAdmin owner.
-              </CardDescription>
-            </div>
-            <Button size="sm" variant="outline" asChild>
-              <a
-                href={`/api/super-admin/export/csv${
-                  subAdminId !== ALL_FILTER ? `?subAdminId=${encodeURIComponent(subAdminId)}` : ""
-                }`}
-              >
-                <Download data-icon="inline-start" />
-                Export CSV
-              </a>
-            </Button>
-          </div>
-
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="relative">
-              <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Filters */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
+                placeholder="Search employees by name, email, or department..."
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search employee"
+                onChange={(e) => setQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
-
-            <Select value={site} onValueChange={setSite}>
-              <SelectTrigger className="w-full" size="default">
-                <SelectValue placeholder="All Sites" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value={ALL_FILTER}>All Sites</SelectItem>
-                  {data.filters.sites.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-
-            <Select value={department} onValueChange={setDepartment}>
-              <SelectTrigger className="w-full" size="default">
-                <SelectValue placeholder="All Departments" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem value={ALL_FILTER}>All Departments</SelectItem>
-                  {data.filters.departments.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {value}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-
             <Select value={subAdminId} onValueChange={setSubAdminId}>
-              <SelectTrigger className="w-full" size="default">
-                <SelectValue placeholder="All SubAdmins" />
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="Filter by SubAdmin" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
                   <SelectItem value={ALL_FILTER}>All SubAdmins</SelectItem>
-                  {data.filters.subAdmins.map((owner) => (
-                    <SelectItem key={owner.id} value={owner.id}>
-                      {owner.name}
+                  {data.filters.subAdmins.map((sa) => (
+                    <SelectItem key={sa.id} value={sa.id}>
+                      {sa.name}
                     </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
+            {selectedRows.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="gap-1">
+                  {selectedRows.length} selected
+                  <button
+                    onClick={() => setSelectedRows([])}
+                    className="ml-1 hover:text-foreground"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              </div>
+            )}
           </div>
-        </CardHeader>
+        </CardContent>
+      </Card>
 
-        <CardContent className="flex flex-col gap-3">
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-          {loading ? <Skeleton className="h-10 w-full" /> : null}
+      {loading ? <Skeleton className="h-10 w-full" /> : null}
 
-          <Table>
-            <TableHeader>
+      {/* Table */}
+      <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-border/50 hover:bg-transparent">
+              <TableHead className="w-12">
+                <Checkbox
+                  checked={
+                    selectedRows.length === paginatedEmployees.length &&
+                    paginatedEmployees.length > 0
+                  }
+                  onCheckedChange={toggleSelectAll}
+                />
+              </TableHead>
+              <TableHead>Employee</TableHead>
+              <TableHead className="hidden md:table-cell">Department</TableHead>
+              <TableHead className="hidden lg:table-cell">SubAdmin</TableHead>
+              <TableHead className="text-center">Assessments</TableHead>
+              <TableHead className="text-center">Avg Score</TableHead>
+              <TableHead className="hidden sm:table-cell">
+                Last Assessment
+              </TableHead>
+              <TableHead className="text-center">Status</TableHead>
+              <TableHead className="w-12" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedEmployees.length === 0 ? (
               <TableRow>
-                <TableHead>Employee</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Site</TableHead>
-                <TableHead>SubAdmin</TableHead>
-                <TableHead>Last Assessed</TableHead>
-                <TableHead>Latest Score</TableHead>
-                <TableHead>Latest Remark</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableCell
+                  colSpan={9}
+                  className="h-16 text-center text-muted-foreground"
+                >
+                  No employees found for current filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {data.employees.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={9} className="h-16 text-center text-muted-foreground">
-                    No employees found for current filters.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.employees.map((employee) => (
-                  <TableRow key={employee.id}>
+            ) : (
+              paginatedEmployees.map((employee) => {
+                const avgScore = employee.report?.averageScore ?? 0;
+                const badge = scoreBadgeVariant(avgScore);
+                return (
+                  <TableRow
+                    key={employee.id}
+                    className="border-border/50 hover:bg-accent/30"
+                  >
                     <TableCell>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{employee.fullName}</p>
-                        <p className="text-xs text-muted-foreground">{employee.phoneNumber}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{employee.department}</TableCell>
-                    <TableCell>{employee.jobRole}</TableCell>
-                    <TableCell>{employee.site}</TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="text-sm text-foreground">{employee.subAdmin.name}</p>
-                        <p className="text-xs text-muted-foreground">{employee.subAdmin.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{formatDate(employee.report?.lastAssessedAt)}</TableCell>
-                    <TableCell>
-                      <ScoreBadge score={employee.report?.latestScore ?? null} />
-                    </TableCell>
-                    <TableCell>
-                      <RemarkBadge
-                        remarkScore={employee.report?.latestRemarkScore ?? null}
-                        remark={employee.report?.latestRemark ?? null}
+                      <Checkbox
+                        checked={selectedRows.includes(employee.id)}
+                        onCheckedChange={() => toggleSelectRow(employee.id)}
                       />
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button size="xs" variant="outline" asChild>
-                          <Link href={`/super-admin/employees/${employee.id}`}>
-                            <ArrowUpRight data-icon="inline-start" />
-                            Profile
-                          </Link>
-                        </Button>
-                        <Button size="xs" variant="outline" asChild>
-                          <Link href={`/super-admin/employees/${employee.id}/report`}>
-                            <FileText data-icon="inline-start" />
-                            Report
-                          </Link>
-                        </Button>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          className={cn(
+                            "size-8 ring-1 ring-border/50",
+                            avColor(employee.fullName),
+                          )}
+                        >
+                          <AvatarFallback
+                            className={cn(
+                              "bg-transparent font-semibold text-xs",
+                              avColor(employee.fullName),
+                            )}
+                          >
+                            {initials(employee.fullName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {employee.fullName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {employee.phoneNumber}
+                          </p>
+                        </div>
                       </div>
                     </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant="outline" className="font-normal">
+                        {employee.department}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {employee.subAdmin.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {employee.subAdmin.email}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <span className="font-mono font-semibold text-foreground">
+                        {employee._count.submissions}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span
+                          className={cn(
+                            "font-mono font-bold",
+                            scoreColor(avgScore),
+                          )}
+                        >
+                          {avgScore.toFixed(1)}
+                        </span>
+                        <TrendIcon trend={employee.report?.trend} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
+                      {formatDate(employee.report?.lastAssessedAt)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        className={cn(
+                          "text-[10px]",
+                          employee.isActive
+                            ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30"
+                            : "bg-muted text-muted-foreground border-border",
+                        )}
+                      >
+                        {employee.isActive ? "active" : "inactive"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Dialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DialogTrigger asChild>
+                              <DropdownMenuItem>
+                                <Eye className="size-4 mr-2" />
+                                View Report
+                              </DropdownMenuItem>
+                            </DialogTrigger>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/super-admin/employees/${employee.id}`}
+                              >
+                                <FileText className="size-4 mr-2" />
+                                Profile
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/super-admin/employees/${employee.id}/report`}
+                              >
+                                <FileText className="size-4 mr-2" />
+                                Full Report
+                              </Link>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <EmployeeReportDialog employee={employee} />
+                      </Dialog>
+                    </TableCell>
                   </TableRow>
-                ))
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border/50">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            {employees.length === 0
+              ? 0
+              : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
+            to {Math.min(currentPage * ITEMS_PER_PAGE, employees.length)} of{" "}
+            {employees.length} employees
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "ghost"}
+                    size="sm"
+                    className="w-8"
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </Button>
+                ),
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </div>
       </Card>
     </div>
   );
