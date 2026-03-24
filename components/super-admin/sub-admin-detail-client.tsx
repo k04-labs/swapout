@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useAppQuery } from "@/hooks/query";
 
 type Payload = {
   subAdmin: {
@@ -89,45 +89,14 @@ function DetailSkeleton() {
 }
 
 export function SuperAdminSubAdminDetailClient({ subAdminId }: { subAdminId: string }) {
-  const [data, setData] = useState<Payload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/super-admin/sub-admins/${subAdminId}`, {
-          cache: "no-store",
-        });
-        const payload = (await response.json()) as Payload;
-
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load sub-admin details.");
-        }
-
-        if (mounted) {
-          setData(payload);
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Failed to load sub-admin details.");
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [subAdminId]);
+  const subAdminDetailQuery = useAppQuery<Payload>({
+    queryKey: ["super-admin-sub-admin-detail", subAdminId],
+    url: `/api/super-admin/sub-admins/${subAdminId}`,
+    fallbackError: "Failed to load sub-admin details.",
+  });
+  const data = subAdminDetailQuery.data ?? null;
+  const loading = subAdminDetailQuery.isLoading;
+  const error = subAdminDetailQuery.error?.message ?? null;
 
   if (loading) {
     return <DetailSkeleton />;
@@ -289,4 +258,3 @@ export function SuperAdminSubAdminDetailClient({ subAdminId }: { subAdminId: str
     </div>
   );
 }
-

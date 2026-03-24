@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, RotateCcw, Save, Search, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppMutation } from "@/hooks/mutation";
+import { useAppQuery } from "@/hooks/query";
+import { apiClient } from "@/lib/api-client";
 
 const FILTER_ALL = "ALL";
 
@@ -114,9 +117,6 @@ function QuestionsSkeleton() {
 }
 
 export function SuperAdminQuestionsClient() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -127,35 +127,72 @@ export function SuperAdminQuestionsClient() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<QuestionForm>(createInitialForm());
+  const questionsQuery = useAppQuery<QuestionsPayload>({
+    queryKey: ["super-admin-questions"],
+    url: "/api/super-admin/questions",
+    params: { includeInactive: true },
+    fallbackError: "Failed to load questions.",
+  });
+  const saveQuestionMutation = useAppMutation<
+    { message?: string },
+    {
+      text: string;
+      category: Category;
+      difficulty: Difficulty;
+      isActive: boolean;
+      options?: Array<{ text: string; weightLabel: string; score: number }>;
+    }
+  >({
+    mutationKey: ["super-admin-question-save"],
+    mutationFn: async (body) => {
+      const endpoint = editingId
+        ? "/api/super-admin/questions/" + editingId
+        : "/api/super-admin/questions";
+      const method = editingId ? "patch" : "post";
+      const { data } = await apiClient.request<{ message?: string }>({
+        url: endpoint,
+        method,
+        data: body,
+      });
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-questions"]],
+    fallbackError: "Unable to save question.",
+  });
+  const toggleQuestionMutation = useAppMutation<{ message?: string }, string>({
+    mutationKey: ["super-admin-question-toggle"],
+    mutationFn: async (questionId) => {
+      const { data } = await apiClient.patch<{ message?: string }>(
+        "/api/super-admin/questions/" + questionId + "/toggle",
+      );
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-questions"]],
+    fallbackError: "Failed to toggle question.",
+  });
+  const deleteQuestionMutation = useAppMutation<{ message?: string }, string>({
+    mutationKey: ["super-admin-question-delete"],
+    mutationFn: async (questionId) => {
+      const { data } = await apiClient.delete<{ message?: string }>(
+        "/api/super-admin/questions/" + questionId,
+      );
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-questions"]],
+    fallbackError: "Failed to delete question.",
+  });
+  const questions = useMemo(
+    () => questionsQuery.data?.questions ?? [],
+    [questionsQuery.data],
+  );
+  const loading = questionsQuery.isLoading;
+  const isFetching = questionsQuery.isFetching;
+  const saving = saveQuestionMutation.isPending;
+  const queryError = questionsQuery.error?.message ?? null;
+  const errorMessage = error ?? queryError;
 
   const editingQuestion = editingId ? questions.find((question) => question.id === editingId) ?? null : null;
   const optionsLocked = editingQuestion ? (editingQuestion._count?.responses ?? 0) > 0 : false;
-
-  async function loadQuestions() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/super-admin/questions?includeInactive=true", {
-        cache: "no-store",
-      });
-      const payload = (await response.json()) as QuestionsPayload;
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to load questions.");
-      }
-
-      setQuestions(payload.questions);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Failed to load questions.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadQuestions();
-  }, []);
 
   const filteredQuestions = useMemo(() => {
     return questions.filter((question) => {
@@ -233,7 +270,6 @@ export function SuperAdminQuestionsClient() {
   }
 
   async function submitQuestion() {
-    setSaving(true);
     setFormError(null);
 
     try {
@@ -275,51 +311,23 @@ export function SuperAdminQuestionsClient() {
         }
       }
 
-      const endpoint = editingId
-        ? "/api/super-admin/questions/" + editingId
-        : "/api/super-admin/questions";
-      const method = editingId ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: normalizedText,
-          category: form.category,
-          difficulty: form.difficulty,
-          isActive: form.isActive,
-          ...(normalizedOptions ? { options: normalizedOptions } : {}),
-        }),
+      await saveQuestionMutation.mutateAsync({
+        text: normalizedText,
+        category: form.category,
+        difficulty: form.difficulty,
+        isActive: form.isActive,
+        ...(normalizedOptions ? { options: normalizedOptions } : {}),
       });
-
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Unable to save question.");
-      }
-
-      await loadQuestions();
       closeForm();
     } catch (saveError) {
       setFormError(saveError instanceof Error ? saveError.message : "Unable to save question.");
-    } finally {
-      setSaving(false);
     }
   }
 
   async function toggleQuestion(question: Question) {
     try {
-      const response = await fetch("/api/super-admin/questions/" + question.id + "/toggle", {
-        method: "PATCH",
-      });
-
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to toggle question.");
-      }
-
-      await loadQuestions();
+      setError(null);
+      await toggleQuestionMutation.mutateAsync(question.id);
     } catch (toggleError) {
       setError(toggleError instanceof Error ? toggleError.message : "Failed to toggle question.");
     }
@@ -330,16 +338,8 @@ export function SuperAdminQuestionsClient() {
     if (!confirmed) return;
 
     try {
-      const response = await fetch("/api/super-admin/questions/" + question.id, {
-        method: "DELETE",
-      });
-      const payload = (await response.json()) as { message?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to delete question.");
-      }
-
-      await loadQuestions();
+      setError(null);
+      await deleteQuestionMutation.mutateAsync(question.id);
       if (editingId === question.id) {
         closeForm();
       }
@@ -415,8 +415,8 @@ export function SuperAdminQuestionsClient() {
         </CardHeader>
 
         <CardContent className="flex flex-col gap-3">
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {loading ? <Skeleton className="h-10 w-full" /> : null}
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+          {isFetching ? <Skeleton className="h-10 w-full" /> : null}
 
           <Table>
             <TableHeader>

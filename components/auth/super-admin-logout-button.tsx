@@ -1,24 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAppMutation } from "@/hooks/mutation";
+import { apiClient } from "@/lib/api-client";
 
 export function SuperAdminLogoutButton() {
   const router = useRouter();
-  const [isPending, setIsPending] = useState(false);
+  const logoutMutation = useAppMutation<void, void>({
+    mutationKey: ["super-admin-logout"],
+    mutationFn: async () => {
+      await apiClient.post("/api/super-admin/auth/logout");
+    },
+    fallbackError: "Failed to logout.",
+  });
+  const isPending = logoutMutation.isPending;
 
   async function handleLogout() {
-    setIsPending(true);
     try {
-      await fetch("/api/super-admin/auth/logout", {
-        method: "POST",
-      });
+      await logoutMutation.mutateAsync(undefined);
     } finally {
       router.push("/super-admin/login");
       router.refresh();
-      setIsPending(false);
     }
   }
 

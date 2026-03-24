@@ -26,10 +26,14 @@ export default async function SuperAdminLayout({
       title=""
       roleLabel="SuperAdmin"
       userName={superAdmin?.username ?? "SuperAdmin"}
-      userEmail={superAdmin?.username ? `${superAdmin.username}@swapout.local` : undefined}
+      userEmail={
+        superAdmin?.username
+          ? `${superAdmin.username}@swapout.local`
+          : undefined
+      }
       logoutEndpoint="/api/super-admin/auth/logout"
       logoutRedirect="/super-admin/login"
-      settingsHref="/super-admin/dashboard"
+      settingsHref="/super-admin/settings"
       navItems={[
         {
           label: "Dashboard",
@@ -50,6 +54,11 @@ export default async function SuperAdminLayout({
           label: "Questions",
           href: "/super-admin/questions",
           icon: "FileText",
+        },
+        {
+          label: "Settings",
+          href: "/super-admin/settings",
+          icon: "Settings",
         },
       ]}
     >

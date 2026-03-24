@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -36,6 +36,7 @@ import {
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { useTheme } from "@/lib/theme";
+import { useAppQuery } from "@/hooks/query";
 
 type DashboardStats = {
   metrics: {
@@ -146,58 +147,20 @@ function DashboardOverviewSkeleton() {
 }
 
 export function DashboardOverview() {
-  const [data, setData] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const { theme } = useTheme();
   const gridColor = theme === "dark" ? "#27272a" : "#f1f5f9";
   const tickColor = theme === "dark" ? "#71717a" : "#94a3b8";
   const barFill = theme === "dark" ? "rgba(124,58,237,0.25)" : "#ede9fe";
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/sub-admin/dashboard/stats", {
-          cache: "no-store",
-        });
-        const payload = (await response.json()) as DashboardStats & {
-          message?: string;
-        };
-
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load dashboard.");
-        }
-
-        if (mounted) {
-          setData(payload);
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load dashboard.",
-          );
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const dashboardQuery = useAppQuery<DashboardStats & { message?: string }>({
+    queryKey: ["sub-admin-dashboard-stats"],
+    url: "/api/sub-admin/dashboard/stats",
+    fallbackError: "Failed to load dashboard.",
+  });
+  const data = dashboardQuery.data ?? null;
+  const loading = dashboardQuery.isLoading;
+  const error = dashboardQuery.error?.message ?? null;
 
   const scoreTrendData = useMemo(() => {
     if (!data) return [];

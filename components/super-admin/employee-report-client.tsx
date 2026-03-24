@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ArrowLeft, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +12,7 @@ import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { ScoreTrendChart } from "@/components/sub-admin/score-trend-chart";
 import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
+import { useAppQuery } from "@/hooks/query";
 
 type Payload = {
   employee: {
@@ -100,47 +101,14 @@ function ReportSkeleton() {
 }
 
 export function SuperAdminEmployeeReportClient({ employeeId }: { employeeId: string }) {
-  const [data, setData] = useState<Payload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/super-admin/employees/${employeeId}/report`, {
-          cache: "no-store",
-        });
-
-        const payload = (await response.json()) as Payload;
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load employee report.");
-        }
-
-        if (mounted) {
-          setData(payload);
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Failed to load employee report.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [employeeId]);
+  const reportQuery = useAppQuery<Payload>({
+    queryKey: ["super-admin-employee-report", employeeId],
+    url: `/api/super-admin/employees/${employeeId}/report`,
+    fallbackError: "Failed to load employee report.",
+  });
+  const data = reportQuery.data ?? null;
+  const loading = reportQuery.isLoading;
+  const error = reportQuery.error?.message ?? null;
 
   const competencyData = useMemo(() => {
     if (!data) return [];

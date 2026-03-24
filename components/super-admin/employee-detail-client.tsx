@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ArrowLeft, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
+import { useAppQuery } from "@/hooks/query";
 
 type Payload = {
   employee: {
@@ -86,48 +86,14 @@ function DetailSkeleton() {
 }
 
 export function SuperAdminEmployeeDetailClient({ employeeId }: { employeeId: string }) {
-  const [data, setData] = useState<Payload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/super-admin/employees/${employeeId}`, {
-          cache: "no-store",
-        });
-
-        const payload = (await response.json()) as Payload;
-
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load employee details.");
-        }
-
-        if (mounted) {
-          setData(payload);
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Failed to load employee details.");
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [employeeId]);
+  const employeeDetailQuery = useAppQuery<Payload>({
+    queryKey: ["super-admin-employee-detail", employeeId],
+    url: `/api/super-admin/employees/${employeeId}`,
+    fallbackError: "Failed to load employee details.",
+  });
+  const data = employeeDetailQuery.data ?? null;
+  const loading = employeeDetailQuery.isLoading;
+  const error = employeeDetailQuery.error?.message ?? null;
 
   if (loading) {
     return <DetailSkeleton />;

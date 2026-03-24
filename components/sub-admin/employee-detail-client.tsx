@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
+import { useAppQuery } from "@/hooks/query";
 
 type EmployeeDetailPayload = {
   message?: string;
@@ -51,56 +52,24 @@ function formatDate(value: string | null | undefined): string {
 }
 
 export function EmployeeDetailClient({ employeeId }: { employeeId: string }) {
-  const [data, setData] = useState<EmployeeDetailPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(`/api/sub-admin/employees/${employeeId}`, {
-          cache: "no-store",
-        });
-
-        const payload = (await response.json()) as EmployeeDetailPayload;
-        if (!response.ok) {
-          throw new Error(
-            payload.message ?? "Failed to load employee details.",
-          );
-        }
-
-        if (mounted) setData(payload);
-      } catch (loadError) {
-        if (mounted) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load employee details.",
-          );
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [employeeId]);
+  const employeeQuery = useAppQuery<EmployeeDetailPayload>({
+    queryKey: ["sub-admin-employee-detail", employeeId],
+    url: `/api/sub-admin/employees/${employeeId}`,
+    fallbackError: "Failed to load employee details.",
+  });
+  const data = employeeQuery.data;
+  const loading = employeeQuery.isLoading;
+  const error = employeeQuery.error?.message ?? null;
 
   if (loading) {
     return (
-      <div className="rounded-md border border-border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Loading employee details...
-        </p>
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-4 w-72" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
       </div>
     );
   }

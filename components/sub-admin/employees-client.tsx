@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import {
   MoreHorizontal,
   Pencil,
@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -36,6 +37,9 @@ import {
 } from "@/components/ui/dialog";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
+import { useAppMutation } from "@/hooks/mutation";
+import { useAppQuery } from "@/hooks/query";
+import { apiClient } from "@/lib/api-client";
 
 type Employee = {
   id: string;
@@ -88,46 +92,50 @@ function formatDate(value: string | null | undefined): string {
 }
 
 export function EmployeesClient() {
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingEmployeeId, setEditingEmployeeId] = useState<string | null>(
     null,
   );
   const [formState, setFormState] = useState<EmployeeFormState>(initialForm);
 
-  async function loadEmployees() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/sub-admin/employees", {
-        cache: "no-store",
+  const employeesQuery = useAppQuery<EmployeePayload>({
+    queryKey: ["sub-admin-employees"],
+    url: "/api/sub-admin/employees",
+    fallbackError: "Failed to load employees.",
+  });
+  const saveEmployeeMutation = useAppMutation<
+    { message?: string },
+    EmployeeFormState
+  >({
+    mutationKey: ["sub-admin-save-employee"],
+    mutationFn: async (body) => {
+      const endpoint = editingEmployeeId
+        ? `/api/sub-admin/employees/${editingEmployeeId}`
+        : "/api/sub-admin/employees";
+      const method = editingEmployeeId ? "patch" : "post";
+      const { data } = await apiClient.request<{ message?: string }>({
+        url: endpoint,
+        method,
+        data: body,
       });
-      const payload = (await response.json()) as EmployeePayload;
+      return data;
+    },
+    invalidateQueryKeys: [["sub-admin-employees"]],
+    fallbackError: "Unable to save employee.",
+    onSuccess: async () => {
+      closeForm();
+    },
+  });
 
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to load employees.");
-      }
-
-      setEmployees(payload.employees);
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load employees.",
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadEmployees();
-  }, []);
-
+  const employees = useMemo(
+    () => employeesQuery.data?.employees ?? [],
+    [employeesQuery.data],
+  );
+  const loading = employeesQuery.isLoading;
+  const isFetching = employeesQuery.isFetching;
+  const saving = saveEmployeeMutation.isPending;
+  const error = employeesQuery.error?.message ?? null;
   const editingEmployee = useMemo(
     () =>
       employees.find((employee) => employee.id === editingEmployeeId) ?? null,
@@ -137,6 +145,7 @@ export function EmployeesClient() {
   function openCreateForm() {
     setEditingEmployeeId(null);
     setFormState(initialForm);
+    setFormError(null);
     setFormOpen(true);
   }
 
@@ -149,6 +158,7 @@ export function EmployeesClient() {
       phoneNumber: employee.phoneNumber,
       site: employee.site,
     });
+    setFormError(null);
     setFormOpen(true);
   }
 
@@ -156,44 +166,21 @@ export function EmployeesClient() {
     setFormOpen(false);
     setEditingEmployeeId(null);
     setFormState(initialForm);
+    setFormError(null);
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    setSaving(true);
-    setError(null);
+    setFormError(null);
 
     try {
-      const endpoint = editingEmployeeId
-        ? `/api/sub-admin/employees/${editingEmployeeId}`
-        : "/api/sub-admin/employees";
-      const method = editingEmployeeId ? "PATCH" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formState),
-      });
-
-      const payload = (await response.json()) as { message?: string };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Unable to save employee.");
-      }
-
-      await loadEmployees();
-      closeForm();
+      await saveEmployeeMutation.mutateAsync(formState);
     } catch (submitError) {
-      setError(
+      setFormError(
         submitError instanceof Error
           ? submitError.message
           : "Unable to save employee.",
       );
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -211,14 +198,16 @@ export function EmployeesClient() {
         </Button>
       </div>
 
-      {loading ? (
-        <div className="rounded-md border border-border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">Loading employees...</p>
+      {loading && employees.length === 0 ? (
+        <div className="rounded-md border border-border bg-card p-5">
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Skeleton key={`employee-skeleton-${index}`} className="h-12 w-full" />
+            ))}
+          </div>
         </div>
       ) : null}
-      {error ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-      ) : null}
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
       {!loading && employees.length === 0 ? (
         <div className="rounded-md border border-dashed border-border bg-card p-8 text-center">
@@ -230,6 +219,7 @@ export function EmployeesClient() {
 
       {employees.length > 0 ? (
         <div className="rounded-md border border-border bg-card overflow-hidden">
+          {isFetching ? <Skeleton className="h-1 w-full" /> : null}
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
@@ -359,6 +349,9 @@ export function EmployeesClient() {
           </DialogHeader>
 
           <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+            {formError ? (
+              <p className="sm:col-span-2 text-sm text-destructive">{formError}</p>
+            ) : null}
             <div className="space-y-1.5">
               <Label
                 htmlFor="fullName"

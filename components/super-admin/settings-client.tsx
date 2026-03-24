@@ -1,10 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
-import { Moon, Sun, Monitor } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Moon, Sun } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -12,48 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/theme";
-import { authClient } from "@/lib/auth-client";
 
-type SettingsClientProps = {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    image: string | null;
-  };
+type SuperAdminSettingsClientProps = {
+  username: string;
 };
 
-export function SettingsClient({ user }: SettingsClientProps) {
-  const [name, setName] = useState(user.name);
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function SuperAdminSettingsClient({
+  username,
+}: SuperAdminSettingsClientProps) {
   const { theme, setTheme } = useTheme();
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSaving(true);
-    setError(null);
-    setSuccess(false);
-
-    try {
-      const { error: updateError } = await authClient.updateUser({ name });
-
-      if (updateError) {
-        throw new Error(updateError.message ?? "Failed to update profile.");
-      }
-
-      setSuccess(true);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update profile.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -61,54 +28,29 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">Profile</CardTitle>
-          <CardDescription>Manage your account information</CardDescription>
+          <CardDescription>Your SuperAdmin account information</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="max-w-md space-y-4">
+          <div className="max-w-md space-y-4">
             <div className="space-y-1.5">
               <Label
-                htmlFor="name"
+                htmlFor="username"
                 className="text-xs font-medium text-muted-foreground"
               >
-                Full Name
+                Username
               </Label>
               <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-xs font-medium text-muted-foreground"
-              >
-                Email
-              </Label>
-              <Input
-                id="email"
-                value={user.email}
+                id="username"
+                value={username}
                 disabled
                 className="opacity-60"
               />
               <p className="text-[10px] text-muted-foreground">
-                Email cannot be changed
+                Username is managed at the system level and cannot be changed
+                here.
               </p>
             </div>
-
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            {success && (
-              <p className="text-xs text-emerald-600 dark:text-emerald-400">
-                Profile updated successfully.
-              </p>
-            )}
-
-            <Button type="submit" size="sm" disabled={saving}>
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </form>
+          </div>
         </CardContent>
       </Card>
 

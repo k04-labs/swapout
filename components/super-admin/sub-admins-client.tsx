@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   UserCheck,
   Search,
@@ -45,6 +45,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAppMutation } from "@/hooks/mutation";
+import { useAppQuery } from "@/hooks/query";
+import { apiClient } from "@/lib/api-client";
 
 type ApprovalStatus = "PENDING" | "APPROVED" | "REJECTED";
 
@@ -387,40 +390,32 @@ function PendingSubAdminRow({
 
 export function SuperAdminSubAdminsClient() {
   const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [data, setData] = useState<SubAdminsPayload | null>(null);
-
-  async function load() {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/super-admin/sub-admins", {
-        cache: "no-store",
-      });
-      const payload = (await response.json()) as SubAdminsPayload;
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to fetch sub-admins.");
-      }
-
-      setData(payload);
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to fetch sub-admins.",
+  const [actionError, setActionError] = useState<string | null>(null);
+  const subAdminsQuery = useAppQuery<SubAdminsPayload>({
+    queryKey: ["super-admin-sub-admins"],
+    url: "/api/super-admin/sub-admins",
+    fallbackError: "Failed to fetch sub-admins.",
+  });
+  const actionMutation = useAppMutation<
+    { message?: string },
+    { subAdminId: string; action: "approve" | "reject" | "revoke" }
+  >({
+    mutationKey: ["super-admin-sub-admin-action"],
+    mutationFn: async ({ subAdminId, action }) => {
+      const { data } = await apiClient.patch<{ message?: string }>(
+        `/api/super-admin/sub-admins/${subAdminId}/${action}`,
       );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void load();
-  }, []);
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-sub-admins"]],
+    fallbackError: "Failed to update sub-admin.",
+  });
+  const data = subAdminsQuery.data ?? null;
+  const loading = subAdminsQuery.isLoading;
+  const actionLoadingId = actionMutation.isPending
+    ? actionMutation.variables?.subAdminId ?? null
+    : null;
+  const error = actionError ?? subAdminsQuery.error?.message ?? null;
 
   const approvedSubAdmins = useMemo(() => {
     if (!data) return [];
@@ -446,31 +441,16 @@ export function SuperAdminSubAdminsClient() {
     subAdminId: string,
     action: "approve" | "reject" | "revoke",
   ) {
-    setActionLoadingId(subAdminId);
-    setError(null);
+    setActionError(null);
 
     try {
-      const response = await fetch(
-        `/api/super-admin/sub-admins/${subAdminId}/${action}`,
-        {
-          method: "PATCH",
-        },
-      );
-
-      const payload = (await response.json()) as { message?: string };
-      if (!response.ok) {
-        throw new Error(payload.message ?? `Failed to ${action} sub-admin.`);
-      }
-
-      await load();
+      await actionMutation.mutateAsync({ subAdminId, action });
     } catch (actionError) {
-      setError(
+      setActionError(
         actionError instanceof Error
           ? actionError.message
           : `Failed to ${action} sub-admin.`,
       );
-    } finally {
-      setActionLoadingId(null);
     }
   }
 

@@ -5,6 +5,7 @@ import "./globals.css";
 import { Geist, Prata } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/lib/theme";
+import ClientProvider from "@/providers/client-provider";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const prata = Prata({
@@ -37,7 +38,9 @@ export default function RootLayout({
             __html: `try{if(localStorage.getItem("theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
           }}
         />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ClientProvider>{children}</ClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

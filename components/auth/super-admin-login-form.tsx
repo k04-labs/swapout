@@ -6,42 +6,41 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAppMutation } from "@/hooks/mutation";
+import { apiClient } from "@/lib/api-client";
 
 export function SuperAdminLoginForm() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
+  const signinMutation = useAppMutation<
+    unknown,
+    { username: string; password: string }
+  >({
+    mutationKey: ["super-admin-signin"],
+    mutationFn: async (body) => {
+      const { data } = await apiClient.post("/api/super-admin/auth/login", body);
+      return data;
+    },
+    fallbackError: "Invalid credentials",
+  });
+  const isPending = signinMutation.isPending;
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setIsPending(true);
 
     try {
-      const response = await fetch("/api/super-admin/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          message?: string;
-        } | null;
-        setError(payload?.message ?? "Invalid credentials");
-        return;
-      }
-
+      await signinMutation.mutateAsync({ username, password });
       router.push("/super-admin/dashboard");
       router.refresh();
-    } catch {
-      setError("Unable to sign in right now. Please try again.");
-    } finally {
-      setIsPending(false);
+    } catch (signinError) {
+      setError(
+        signinError instanceof Error
+          ? signinError.message
+          : "Unable to sign in right now. Please try again.",
+      );
     }
   }
 

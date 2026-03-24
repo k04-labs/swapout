@@ -66,6 +66,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useAppQuery } from "@/hooks/query";
 
 const ALL_FILTER = "__all__";
 const ITEMS_PER_PAGE = 10;
@@ -408,73 +409,35 @@ function EmployeesSkeleton() {
 /* ---------- Main Component ---------- */
 export function SuperAdminEmployeesClient() {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [subAdminId, setSubAdminId] = useState(ALL_FILTER);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-
-  const [data, setData] = useState<EmployeesPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const employeesQuery = useAppQuery<EmployeesPayload>({
+    queryKey: ["super-admin-employees", debouncedQuery, subAdminId],
+    url: "/api/super-admin/employees",
+    params: {
+      q: debouncedQuery || undefined,
+      subAdminId: subAdminId !== ALL_FILTER ? subAdminId : undefined,
+    },
+    keepPrevious: true,
+    fallbackError: "Failed to load employees.",
+  });
+  const data = employeesQuery.data ?? null;
+  const loading = employeesQuery.isLoading;
+  const isFetching = employeesQuery.isFetching;
+  const error = employeesQuery.error?.message ?? null;
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams();
-        const normalizedQuery = query.trim();
-
-        if (normalizedQuery) params.set("q", normalizedQuery);
-        if (subAdminId !== ALL_FILTER) params.set("subAdminId", subAdminId);
-
-        const response = await fetch(
-          `/api/super-admin/employees?${params.toString()}`,
-          {
-            cache: "no-store",
-            signal: controller.signal,
-          },
-        );
-
-        const payload = (await response.json()) as EmployeesPayload;
-
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load employees.");
-        }
-
-        setData(payload);
-      } catch (loadError) {
-        if (controller.signal.aborted) return;
-        setError(
-          loadError instanceof Error
-            ? loadError.message
-            : "Failed to load employees.",
-        );
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-
     const timeout = setTimeout(() => {
-      void load();
+      setDebouncedQuery(query.trim());
     }, 220);
 
     return () => {
       clearTimeout(timeout);
-      controller.abort();
     };
-  }, [query, subAdminId]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [query, subAdminId]);
-
-  const employees = data?.employees ?? [];
+  }, [query]);
+  const employees = useMemo(() => data?.employees ?? [], [data]);
 
   const totals = useMemo(() => {
     return {
@@ -634,11 +597,20 @@ export function SuperAdminEmployeesClient() {
               <Input
                 placeholder="Search employees by name, email, or department..."
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="pl-9"
               />
             </div>
-            <Select value={subAdminId} onValueChange={setSubAdminId}>
+            <Select
+              value={subAdminId}
+              onValueChange={(value) => {
+                setSubAdminId(value);
+                setCurrentPage(1);
+              }}
+            >
               <SelectTrigger className="w-full sm:w-48">
                 <SelectValue placeholder="Filter by SubAdmin" />
               </SelectTrigger>
@@ -671,8 +643,7 @@ export function SuperAdminEmployeesClient() {
       </Card>
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      {loading ? <Skeleton className="h-10 w-full" /> : null}
+      {isFetching ? <Skeleton className="h-10 w-full" /> : null}
 
       {/* Table */}
       <Card className="border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
@@ -713,7 +684,6 @@ export function SuperAdminEmployeesClient() {
             ) : (
               paginatedEmployees.map((employee) => {
                 const avgScore = employee.report?.averageScore ?? 0;
-                const badge = scoreBadgeVariant(avgScore);
                 return (
                   <TableRow
                     key={employee.id}

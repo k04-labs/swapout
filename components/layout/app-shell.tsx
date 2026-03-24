@@ -21,6 +21,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { signOut } from "@/lib/auth-client";
+import { useAppMutation } from "@/hooks/mutation";
+import { apiClient } from "@/lib/api-client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -74,22 +76,27 @@ export function AppShell({
   settingsHref = "/sub-admin/settings",
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [logoutPending, setLogoutPending] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const logoutMutation = useAppMutation<void, void>({
+    mutationKey: ["logout", logoutEndpoint ?? "sub-admin"],
+    mutationFn: async () => {
+      if (logoutEndpoint) {
+        await apiClient.post(logoutEndpoint);
+        return;
+      }
+      await signOut();
+    },
+    fallbackError: "Failed to logout.",
+  });
+  const logoutPending = logoutMutation.isPending;
 
   async function handleLogout() {
-    setLogoutPending(true);
     try {
-      if (logoutEndpoint) {
-        await fetch(logoutEndpoint, { method: "POST" });
-      } else {
-        await signOut();
-      }
+      await logoutMutation.mutateAsync(undefined);
     } finally {
       router.push(logoutRedirect);
       router.refresh();
-      setLogoutPending(false);
     }
   }
 

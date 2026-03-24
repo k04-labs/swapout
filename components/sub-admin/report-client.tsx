@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -15,6 +16,7 @@ import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 import { ScoreTrendChart } from "@/components/sub-admin/score-trend-chart";
 import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
+import { useAppQuery } from "@/hooks/query";
 
 type ReportPayload = {
   message?: string;
@@ -64,50 +66,14 @@ function toLabel(category: string): string {
 }
 
 export function ReportClient({ employeeId }: { employeeId: string }) {
-  const [data, setData] = useState<ReportPayload | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `/api/sub-admin/employees/${employeeId}/report`,
-          {
-            cache: "no-store",
-          },
-        );
-
-        const payload = (await response.json()) as ReportPayload;
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to load report.");
-        }
-
-        if (mounted) setData(payload);
-      } catch (loadError) {
-        if (mounted) {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load report.",
-          );
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, [employeeId]);
+  const reportQuery = useAppQuery<ReportPayload>({
+    queryKey: ["sub-admin-report", employeeId],
+    url: `/api/sub-admin/employees/${employeeId}/report`,
+    fallbackError: "Failed to load report.",
+  });
+  const data = reportQuery.data;
+  const loading = reportQuery.isLoading;
+  const error = reportQuery.error?.message ?? null;
 
   const competencyData = useMemo(() => {
     if (!data) return [];
@@ -129,8 +95,17 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
 
   if (loading) {
     return (
-      <div className="rounded-md border border-border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">Loading report...</p>
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-6 w-44" />
+          <Skeleton className="h-4 w-72" />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={`report-stat-${index}`} className="h-24 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-44 w-full" />
+        </div>
       </div>
     );
   }

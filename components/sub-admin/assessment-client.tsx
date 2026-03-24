@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAppMutation } from "@/hooks/mutation";
+import { apiClient } from "@/lib/api-client";
 
 type AssessmentQuestion = {
   sessionQuestionId: string;
@@ -32,55 +35,60 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const startSessionMutation = useAppMutation<
+    StartPayload,
+    { employeeId: string }
+  >({
+    mutationKey: ["sub-admin-assessment-start", employeeId],
+    mutationFn: async ({ employeeId: currentEmployeeId }) => {
+      const { data } = await apiClient.post<StartPayload>(
+        "/api/sub-admin/assessments/start",
+        {
+          employeeId: currentEmployeeId,
+        },
+      );
+      return data;
+    },
+    fallbackError: "Failed to start assessment.",
+    onSuccess: async (payload) => {
+      setSessionId(payload.sessionId);
+      setQuestions(payload.questions);
+      setError(null);
+    },
+    onError: async (mutationError) => {
+      setError(mutationError.message);
+    },
+  });
+  const submitAssessmentMutation = useAppMutation<
+    {
+      message?: string;
+      employeeId?: string;
+    },
+    {
+      sessionId: string;
+      responses: Array<{ questionId: string; optionId: string | undefined }>;
+    }
+  >({
+    mutationKey: ["sub-admin-assessment-submit", employeeId],
+    mutationFn: async ({ sessionId: currentSessionId, responses }) => {
+      const { data } = await apiClient.post<{
+        message?: string;
+        employeeId?: string;
+      }>(`/api/sub-admin/assessments/${currentSessionId}/submit`, {
+        responses,
+      });
+      return data;
+    },
+    fallbackError: "Failed to submit assessment.",
+  });
+  const loading = startSessionMutation.isPending && questions.length === 0;
+  const submitting = submitAssessmentMutation.isPending;
+  const startSession = startSessionMutation.mutate;
 
   useEffect(() => {
-    let mounted = true;
-
-    async function startSession() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/sub-admin/assessments/start", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ employeeId }),
-        });
-
-        const payload = (await response.json()) as StartPayload;
-
-        if (!response.ok) {
-          throw new Error(payload.message ?? "Failed to start assessment.");
-        }
-
-        if (mounted) {
-          setSessionId(payload.sessionId);
-          setQuestions(payload.questions);
-        }
-      } catch (sessionError) {
-        if (mounted) {
-          setError(
-            sessionError instanceof Error
-              ? sessionError.message
-              : "Failed to start assessment.",
-          );
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void startSession();
-
-    return () => {
-      mounted = false;
-    };
-  }, [employeeId]);
+    startSession({ employeeId });
+  }, [employeeId, startSession]);
 
   const answeredCount = useMemo(
     () =>
@@ -92,34 +100,16 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
   async function submitAssessment() {
     if (!sessionId) return;
 
-    setSubmitting(true);
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/sub-admin/assessments/${sessionId}/submit`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            responses: questions.map((question) => ({
-              questionId: question.questionId,
-              optionId: answers[question.questionId],
-            })),
-          }),
-        },
-      );
-
-      const payload = (await response.json()) as {
-        message?: string;
-        employeeId?: string;
-      };
-
-      if (!response.ok) {
-        throw new Error(payload.message ?? "Failed to submit assessment.");
-      }
+      const payload = await submitAssessmentMutation.mutateAsync({
+        sessionId,
+        responses: questions.map((question) => ({
+          questionId: question.questionId,
+          optionId: answers[question.questionId],
+        })),
+      });
 
       router.push(`/sub-admin/employees/${payload.employeeId ?? employeeId}`);
       router.refresh();
@@ -129,17 +119,19 @@ export function AssessmentClient({ employeeId }: { employeeId: string }) {
           ? submitError.message
           : "Failed to submit assessment.",
       );
-    } finally {
-      setSubmitting(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="rounded-md border border-border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
-          Preparing assessment session...
-        </p>
+      <div className="rounded-md border border-border bg-card p-4">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-6 w-56" />
+          <Skeleton className="h-2 w-full" />
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={`assessment-question-${index}`} className="h-28 w-full" />
+          ))}
+        </div>
       </div>
     );
   }

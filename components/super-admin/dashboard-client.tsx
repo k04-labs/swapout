@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { ArrowUpRight, BarChart3, Clock3, UserCheck2, UsersRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useAppQuery } from "@/hooks/query";
 
 type DashboardStatsPayload = {
   metrics: {
@@ -122,53 +123,20 @@ function DashboardSkeleton() {
 }
 
 export function SuperAdminDashboardClient() {
-  const [stats, setStats] = useState<DashboardStatsPayload | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardPayload["leaderboard"]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let mounted = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const [statsResponse, leaderboardResponse] = await Promise.all([
-          fetch("/api/super-admin/dashboard/stats", { cache: "no-store" }),
-          fetch("/api/super-admin/dashboard/leaderboard", { cache: "no-store" }),
-        ]);
-
-        const statsPayload = (await statsResponse.json()) as DashboardStatsPayload;
-        const leaderboardPayload = (await leaderboardResponse.json()) as LeaderboardPayload;
-
-        if (!statsResponse.ok) {
-          throw new Error(statsPayload.message ?? "Failed to load dashboard stats.");
-        }
-        if (!leaderboardResponse.ok) {
-          throw new Error(leaderboardPayload.message ?? "Failed to load leaderboard.");
-        }
-
-        if (mounted) {
-          setStats(statsPayload);
-          setLeaderboard(leaderboardPayload.leaderboard);
-        }
-      } catch (loadError) {
-        if (mounted) {
-          setError(loadError instanceof Error ? loadError.message : "Failed to load dashboard.");
-        }
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    void load();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  const statsQuery = useAppQuery<DashboardStatsPayload>({
+    queryKey: ["super-admin-dashboard-stats"],
+    url: "/api/super-admin/dashboard/stats",
+    fallbackError: "Failed to load dashboard stats.",
+  });
+  const leaderboardQuery = useAppQuery<LeaderboardPayload>({
+    queryKey: ["super-admin-dashboard-leaderboard"],
+    url: "/api/super-admin/dashboard/leaderboard",
+    fallbackError: "Failed to load leaderboard.",
+  });
+  const stats = statsQuery.data ?? null;
+  const leaderboard = leaderboardQuery.data?.leaderboard ?? [];
+  const loading = statsQuery.isLoading || leaderboardQuery.isLoading;
+  const error = statsQuery.error?.message ?? leaderboardQuery.error?.message ?? null;
 
   const metricCards = useMemo(() => {
     if (!stats) return [];
@@ -213,7 +181,14 @@ export function SuperAdminDashboardClient() {
           <CardDescription>{error ?? "Unexpected dashboard error."}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Button onClick={() => window.location.reload()}>Retry</Button>
+          <Button
+            onClick={() => {
+              void statsQuery.refetch();
+              void leaderboardQuery.refetch();
+            }}
+          >
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
