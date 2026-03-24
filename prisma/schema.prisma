@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CompetencyCategory {
+  HAZARD_RECOGNITION
+  INCIDENT_RESPONSE
+  COMPLIANCE_AWARENESS
+  RISK_ASSESSMENT
+  BEHAVIORAL_ACCOUNTABILITY
+}
+
+enum DifficultyLevel {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum SessionStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+model SuperAdmin {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  emailVerified  Boolean        @default(false)
+  image          String?
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedBy     String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  sessions           Session[]
+  accounts           Account[]
+  employees          Employee[]             @relation("EmployeeSubAdmin")
+  submissions        AssessmentSubmission[] @relation("SubmissionSubAdmin")
+  assessmentSessions AssessmentSession[]    @relation("SessionSubAdmin")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  userId                String
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+model Employee {
+  id          String   @id @default(cuid())
+  fullName    String
+  department  String
+  jobRole     String
+  phoneNumber String
+  site        String
+  subAdminId  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subAdmin    User                   @relation("EmployeeSubAdmin", fields: [subAdminId], references: [id])
+  submissions AssessmentSubmission[]
+  report      EmployeeReport?
+  sessions    AssessmentSession[]
+
+  @@index([subAdminId])
+}
+
+model Question {
+  id         String             @id @default(cuid())
+  text       String
+  category   CompetencyCategory
+  difficulty DifficultyLevel    @default(EASY)
+  isActive   Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  options   QuestionOption[]
+  responses AssessmentResponse[]
+  sessions  AssessmentSessionQuestion[]
+}
+
+model QuestionOption {
+  id          String   @id @default(cuid())
+  questionId  String
+  text        String
+  score       Float
+  weightLabel String
+
+  question  Question             @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  responses AssessmentResponse[]
+
+  @@index([questionId])
+}
+
+model AssessmentSession {
+  id          String        @id @default(cuid())
+  employeeId  String
+  subAdminId  String
+  status      SessionStatus @default(IN_PROGRESS)
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+
+  employee         Employee                    @relation(fields: [employeeId], references: [id])
+  subAdmin         User                        @relation("SessionSubAdmin", fields: [subAdminId], references: [id])
+  sessionQuestions AssessmentSessionQuestion[]
+  submission       AssessmentSubmission?
+
+  @@index([employeeId])
+  @@index([subAdminId])
+  @@index([status])
+}
+
+model AssessmentSessionQuestion {
+  id         String            @id @default(cuid())
+  sessionId  String
+  questionId String
+  position   Int
+
+  session  AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question Question          @relation(fields: [questionId], references: [id])
+
+  @@unique([sessionId, questionId])
+  @@unique([sessionId, position])
+  @@index([questionId])
+}
+
+model AssessmentSubmission {
+  id                  String    @id @default(cuid())
+  sessionId           String    @unique
+  employeeId          String
+  subAdminId          String
+  totalScore          Float
+  remark              String
+  remarkScore         Int
+  competencyBreakdown Json?
+  submittedAt         DateTime  @default(now())
+
+  session   AssessmentSession  @relation(fields: [sessionId], references: [id])
+  employee  Employee           @relation(fields: [employeeId], references: [id])
+  subAdmin  User               @relation("SubmissionSubAdmin", fields: [subAdminId], references: [id])
+  responses AssessmentResponse[]
+
+  @@index([employeeId])
+  @@index([subAdminId])
+  @@index([submittedAt])
+}
+
+model AssessmentResponse {
+  id           String               @id @default(cuid())
+  submissionId String
+  questionId   String
+  optionId     String
+  score        Float
+  createdAt    DateTime             @default(now())
+
+  submission AssessmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question   Question             @relation(fields: [questionId], references: [id])
+  option     QuestionOption       @relation(fields: [optionId], references: [id])
+
+  @@index([submissionId])
+  @@index([questionId])
+  @@index([optionId])
+}
+
+model EmployeeReport {
+  id                String   @id @default(cuid())
+  employeeId        String   @unique
+  totalSubmissions  Int      @default(0)
+  latestScore       Float?
+  latestRemarkScore Int?
+  latestRemark      String?
+  averageScore      Float?
+  highestScore      Float?
+  lowestScore       Float?
+  trend             String?
+  lastAssessedAt    DateTime?
+  updatedAt         DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}

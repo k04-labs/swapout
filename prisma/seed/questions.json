@@ -1,0 +1,112 @@
+[
+  {
+    "text": "You notice an oil spill near a busy walkway. What should you do first?",
+    "category": "HAZARD_RECOGNITION",
+    "difficulty": "EASY",
+    "options": [
+      { "text": "Ignore it and continue work.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Tell a coworker and leave it for later.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Place warning signage and report it.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Isolate area immediately, clean/contain safely, and log hazard report.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "A machine alarm activates during operation. What is your safest response?",
+    "category": "INCIDENT_RESPONSE",
+    "difficulty": "MEDIUM",
+    "options": [
+      { "text": "Continue until the task is finished.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Mute alarm and monitor casually.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Pause operation and inform supervisor.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Initiate stop procedure, secure area, and follow incident protocol.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "PPE is mandatory for your zone, but it is uncomfortable today. What do you do?",
+    "category": "COMPLIANCE_AWARENESS",
+    "difficulty": "EASY",
+    "options": [
+      { "text": "Skip PPE for short tasks.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Wear partial PPE only.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Wear required PPE and request better fit.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Fully comply and proactively report PPE usability issue.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "Before a non-routine task, how should risk be handled?",
+    "category": "RISK_ASSESSMENT",
+    "difficulty": "MEDIUM",
+    "options": [
+      { "text": "Start immediately to save time.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Do a quick mental check only.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Review JSA and controls with team.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Complete formal risk assessment and verify controls before start.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "A teammate bypasses a safety interlock to speed up work. How do you respond?",
+    "category": "BEHAVIORAL_ACCOUNTABILITY",
+    "difficulty": "HARD",
+    "options": [
+      { "text": "Say nothing; it is not your issue.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Mention it later if there is time.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Ask them to restore safeguards and notify lead.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Stop unsafe act immediately, restore controls, and submit near-miss.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "You find a damaged ladder in storage. What is the correct action?",
+    "category": "HAZARD_RECOGNITION",
+    "difficulty": "EASY",
+    "options": [
+      { "text": "Use it carefully for light work.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Leave it and warn one coworker.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Tag it out and report damage.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Tag out, remove from service, and ensure replacement before use.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "After a minor chemical splash incident, what is the best immediate response?",
+    "category": "INCIDENT_RESPONSE",
+    "difficulty": "MEDIUM",
+    "options": [
+      { "text": "Continue working unless pain increases.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Rinse briefly and keep it private.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Use eyewash/shower and inform supervisor.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Follow emergency protocol fully and document incident details.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "You are asked to skip permit checks to avoid delay. What should you do?",
+    "category": "COMPLIANCE_AWARENESS",
+    "difficulty": "HARD",
+    "options": [
+      { "text": "Skip checks and finish quickly.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Do minimal checks only.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Complete required checks before starting.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Refuse unsafe shortcut and escalate per policy.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "How should you evaluate risk when weather conditions suddenly change at site?",
+    "category": "RISK_ASSESSMENT",
+    "difficulty": "MEDIUM",
+    "options": [
+      { "text": "Proceed as originally planned.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Adjust pace but keep controls unchanged.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Reassess key hazards with team lead.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Pause work, update risk controls, and restart only when safe.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  },
+  {
+    "text": "A new worker is unsure about lockout-tagout steps. What is your best response?",
+    "category": "BEHAVIORAL_ACCOUNTABILITY",
+    "difficulty": "EASY",
+    "options": [
+      { "text": "Tell them to figure it out quickly.", "score": 0.0, "weightLabel": "Never" },
+      { "text": "Give a brief verbal tip and move on.", "score": 1.5, "weightLabel": "Rarely" },
+      { "text": "Walk through steps and verify understanding.", "score": 3.5, "weightLabel": "Usually" },
+      { "text": "Coach fully, validate execution, and reinforce safe culture.", "score": 5.0, "weightLabel": "Always" }
+    ]
+  }
+]

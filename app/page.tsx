@@ -1,5 +1,5 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return <div className="flex items-center justify-center h-screen text-primary text-5xl">Hello World</div>;
+export default function HomePage() {
+  redirect("/login");
 }
