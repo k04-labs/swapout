@@ -1,3 +1,4 @@
+import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import type { CompetencyCategory, DifficultyLevel } from "@prisma/client";
