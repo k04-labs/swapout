@@ -2,9 +2,31 @@
 
 import Link from "next/link";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  MoreHorizontal,
+  Pencil,
+  Eye,
+  ClipboardCheck,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 
@@ -199,106 +221,111 @@ export function EmployeesClient() {
 
       {employees.length > 0 ? (
         <div className="rounded-xl border border-slate-200/80 bg-white overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Department
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Role
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Site
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Last Assessed
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Score
-                  </th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Remark
-                  </th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100/80">
-                {employees.map((employee) => (
-                  <tr
-                    key={employee.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-slate-800">
-                        {employee.fullName}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {employee.phoneNumber}
-                      </p>
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {employee.department}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {employee.jobRole}
-                    </td>
-                    <td className="px-4 py-3 text-slate-600">
-                      {employee.site}
-                    </td>
-                    <td className="px-4 py-3 text-slate-500 text-xs">
-                      {formatDate(employee.report?.lastAssessedAt)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ScoreBadge
-                        score={employee.report?.latestScore ?? null}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <RemarkBadge
-                        remarkScore={employee.report?.latestRemarkScore ?? null}
-                        remark={employee.report?.latestRemark ?? null}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex flex-wrap justify-end gap-1.5">
-                        <button
-                          onClick={() => openEditForm(employee)}
-                          className="rounded-md px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                        >
-                          Edit
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Name
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Department
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Role
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Site
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Last Assessed
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Score
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Remark
+                </TableHead>
+                <TableHead className="text-right text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Actions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {employees.map((employee) => (
+                <TableRow key={employee.id}>
+                  <TableCell>
+                    <p className="font-medium text-slate-800">
+                      {employee.fullName}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {employee.phoneNumber}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {employee.department}
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {employee.jobRole}
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {employee.site}
+                  </TableCell>
+                  <TableCell className="text-slate-500 text-xs">
+                    {formatDate(employee.report?.lastAssessedAt)}
+                  </TableCell>
+                  <TableCell>
+                    <ScoreBadge score={employee.report?.latestScore ?? null} />
+                  </TableCell>
+                  <TableCell>
+                    <RemarkBadge
+                      remarkScore={employee.report?.latestRemarkScore ?? null}
+                      remark={employee.report?.latestRemark ?? null}
+                    />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
+                          <MoreHorizontal className="h-4 w-4" />
                         </button>
-                        <Link
-                          href={`/sub-admin/employees/${employee.id}`}
-                          className="rounded-md px-2 py-1 text-[11px] font-medium text-violet-600 hover:bg-violet-50 transition-colors"
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => openEditForm(employee)}
                         >
-                          View
-                        </Link>
-                        <Link
-                          href={`/sub-admin/employees/${employee.id}/assess`}
-                          className="rounded-md px-2 py-1 text-[11px] font-medium text-emerald-600 hover:bg-emerald-50 transition-colors"
-                        >
-                          Assess
-                        </Link>
-                        <Link
-                          href={`/sub-admin/employees/${employee.id}/report`}
-                          className="rounded-md px-2 py-1 text-[11px] font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
-                        >
-                          Report
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          <Pencil className="mr-2 h-3.5 w-3.5" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/sub-admin/employees/${employee.id}`}>
+                            <Eye className="mr-2 h-3.5 w-3.5" />
+                            View Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/sub-admin/employees/${employee.id}/assess`}
+                          >
+                            <ClipboardCheck className="mr-2 h-3.5 w-3.5" />
+                            Start Assessment
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/sub-admin/employees/${employee.id}/report`}
+                          >
+                            <FileText className="mr-2 h-3.5 w-3.5" />
+                            View Report
+                          </Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       ) : null}
 

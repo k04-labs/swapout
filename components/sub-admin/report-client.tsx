@@ -2,6 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { CompetencyBarChart } from "@/components/sub-admin/competency-bar-chart";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
@@ -255,50 +263,45 @@ export function ReportClient({ employeeId }: { employeeId: string }) {
             No submissions yet.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Date
-                  </th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Score
-                  </th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Remark
-                  </th>
-                  <th className="px-5 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                    Questions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100/80">
-                {data.submissions.map((submission) => (
-                  <tr
-                    key={submission.id}
-                    className="hover:bg-slate-50/50 transition-colors"
-                  >
-                    <td className="px-5 py-2.5 text-slate-700">
-                      {formatDate(submission.submittedAt)}
-                    </td>
-                    <td className="px-5 py-2.5">
-                      <ScoreBadge score={submission.totalScore} />
-                    </td>
-                    <td className="px-5 py-2.5">
-                      <RemarkBadge
-                        remarkScore={submission.remarkScore}
-                        remark={submission.remark}
-                      />
-                    </td>
-                    <td className="px-5 py-2.5 text-slate-700">
-                      {submission._count.responses}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Date
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Score
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Remark
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  Questions
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.submissions.map((submission) => (
+                <TableRow key={submission.id}>
+                  <TableCell className="text-slate-700">
+                    {formatDate(submission.submittedAt)}
+                  </TableCell>
+                  <TableCell>
+                    <ScoreBadge score={submission.totalScore} />
+                  </TableCell>
+                  <TableCell>
+                    <RemarkBadge
+                      remarkScore={submission.remarkScore}
+                      remark={submission.remark}
+                    />
+                  </TableCell>
+                  <TableCell className="text-slate-700">
+                    {submission._count.responses}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

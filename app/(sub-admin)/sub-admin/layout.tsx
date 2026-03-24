@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
-import { SubAdminLogoutButton } from "@/components/auth/sub-admin-logout-button";
-import { Badge } from "@/components/ui/badge";
-import { getSubAdminFromServer, getSubAdminRedirect } from "@/lib/sub-admin-auth";
+import {
+  getSubAdminFromServer,
+  getSubAdminRedirect,
+} from "@/lib/sub-admin-auth";
 
 export default async function SubAdminLayout({
   children,
@@ -19,32 +20,22 @@ export default async function SubAdminLayout({
   const banner =
     subAdmin.approvalStatus === "PENDING" ? (
       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-        Your account is pending approval. Dashboard navigation is visible but locked.
+        Your account is pending approval. Dashboard navigation is visible but
+        locked.
       </div>
     ) : subAdmin.approvalStatus === "REJECTED" ? (
       <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        Your account access is currently rejected. Contact a SuperAdmin for re-approval.
+        Your account access is currently rejected. Contact a SuperAdmin for
+        re-approval.
       </div>
     ) : null;
-
-  const statusVariant =
-    subAdmin.approvalStatus === "APPROVED"
-      ? "success"
-      : subAdmin.approvalStatus === "PENDING"
-        ? "warning"
-        : "danger";
 
   return (
     <AppShell
       title="SubAdmin Workspace"
-      subtitle={`Welcome, ${subAdmin.name}`}
       roleLabel="SubAdmin"
-      actions={
-        <div className="flex items-center gap-2">
-          <Badge variant={statusVariant}>{subAdmin.approvalStatus}</Badge>
-          <SubAdminLogoutButton />
-        </div>
-      }
+      userName={subAdmin.name}
+      userEmail={subAdmin.email}
       banner={banner}
       navItems={[
         {
@@ -64,6 +55,12 @@ export default async function SubAdminLayout({
           href: getSubAdminRedirect(subAdmin.approvalStatus),
           icon: "ShieldAlert",
           disabled: false,
+        },
+        {
+          label: "Settings",
+          href: "/sub-admin/settings",
+          icon: "Settings",
+          disabled: !isApproved,
         },
       ]}
     >

@@ -10,13 +10,23 @@ import {
   ShieldAlert,
   FileText,
   Settings,
+  LogOut,
+  ChevronsUpDown,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { signOut } from "@/lib/auth-client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
@@ -39,22 +49,47 @@ type AppShellProps = {
   subtitle?: string;
   roleLabel: string;
   navItems: NavItem[];
-  actions?: ReactNode;
   children: ReactNode;
   banner?: ReactNode;
+  userName?: string;
+  userEmail?: string;
+  /** Custom logout: POST to this URL then redirect to logoutRedirect */
+  logoutEndpoint?: string;
+  logoutRedirect?: string;
+  settingsHref?: string;
 };
 
 export function AppShell({
   title,
-  subtitle,
   roleLabel,
   navItems,
-  actions,
   children,
   banner,
+  userName,
+  userEmail,
+  logoutEndpoint,
+  logoutRedirect = "/login",
+  settingsHref = "/sub-admin/settings",
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoutPending, setLogoutPending] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    setLogoutPending(true);
+    try {
+      if (logoutEndpoint) {
+        await fetch(logoutEndpoint, { method: "POST" });
+      } else {
+        await signOut();
+      }
+    } finally {
+      router.push(logoutRedirect);
+      router.refresh();
+      setLogoutPending(false);
+    }
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
@@ -75,7 +110,7 @@ export function AppShell({
         )}
       >
         {/* Logo */}
-        <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200/80 px-4">
+        <div className="flex h-14 shrink-0 items-center justify-between border-b border-slate-100 px-4">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-600">
               <Shield className="h-3.5 w-3.5 text-white" />
@@ -92,22 +127,17 @@ export function AppShell({
           </button>
         </div>
 
-        {/* Role pill */}
-        <div className="px-3 pt-4 pb-2">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-violet-700 border border-violet-100">
-            <span className="h-1.5 w-1.5 rounded-full bg-violet-500" />
-            {roleLabel}
-          </span>
+        {/* Section label */}
+        <div className="px-4 pt-5 pb-1.5">
+          <p className="text-[11px] font-medium text-slate-400">{roleLabel}</p>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+        <nav className="flex-1 overflow-y-auto px-2 space-y-0.5">
           {navItems.map((item) => {
             const isActive =
               pathname === item.href ||
-              (item.href !== "/" && pathname.startsWith(item.href + "/")) ||
-              (item.href === "/sub-admin/dashboard" &&
-                pathname === "/sub-admin/dashboard");
+              (item.href !== "/" && pathname.startsWith(item.href + "/"));
             const Icon = item.icon ? iconMap[item.icon] : undefined;
 
             return (
@@ -117,10 +147,10 @@ export function AppShell({
                 aria-disabled={item.disabled}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-all duration-150",
+                  "group flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-100",
                   isActive
-                    ? "bg-violet-50 text-violet-700"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                    ? "bg-slate-100/80 text-slate-900"
+                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
                   item.disabled && "pointer-events-none opacity-35",
                 )}
               >
@@ -129,33 +159,81 @@ export function AppShell({
                     className={cn(
                       "h-4 w-4 shrink-0",
                       isActive
-                        ? "text-violet-600"
-                        : "text-slate-400 group-hover:text-slate-600",
+                        ? "text-slate-700"
+                        : "text-slate-400 group-hover:text-slate-500",
                     )}
+                    strokeWidth={1.8}
                   />
                 )}
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.badge != null && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-100 px-1 font-mono text-[10px] font-bold text-violet-700">
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-slate-200/80 px-1 font-mono text-[10px] font-bold text-slate-600">
                     {item.badge}
                   </span>
                 )}
-                {isActive && (
-                  <ChevronRight className="h-3 w-3 text-violet-400" />
-                )}
+                <ChevronRight
+                  className={cn(
+                    "h-3.5 w-3.5 shrink-0 transition-colors",
+                    isActive
+                      ? "text-slate-400"
+                      : "text-slate-300 opacity-0 group-hover:opacity-100",
+                  )}
+                />
               </Link>
             );
           })}
         </nav>
 
-        {/* Bottom user section */}
-        <div className="border-t border-slate-200/80 p-3">
-          {subtitle && (
-            <p className="mb-2 px-2 text-[11px] text-slate-400 truncate">
-              {subtitle}
-            </p>
-          )}
-          <div className="flex items-center gap-2 flex-wrap">{actions}</div>
+        {/* Bottom profile dropdown */}
+        <div className="border-t border-slate-100 p-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left hover:bg-slate-50 transition-colors outline-none">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-semibold text-slate-600">
+                  {userName
+                    ? userName
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()
+                    : "U"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-slate-700 truncate leading-tight">
+                    {userName ?? "User"}
+                  </p>
+                  {userEmail && (
+                    <p className="text-[10px] text-slate-400 truncate leading-tight">
+                      {userEmail}
+                    </p>
+                  )}
+                </div>
+                <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="start"
+              className="w-[calc(14rem-1rem)]"
+            >
+              <DropdownMenuItem asChild>
+                <Link href={settingsHref}>
+                  <Settings className="mr-2 h-3.5 w-3.5" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                disabled={logoutPending}
+                className="text-red-600 focus:text-red-600"
+              >
+                <LogOut className="mr-2 h-3.5 w-3.5" />
+                {logoutPending ? "Logging out..." : "Logout"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </aside>
 
