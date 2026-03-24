@@ -373,10 +373,10 @@ export function SuperAdminQuestionsClient() {
           </div>
 
           <Tabs value={statusFilter} onValueChange={(value) => setStatusFilter(value as typeof statusFilter)}>
-            <TabsList>
-              <TabsTrigger value={FILTER_ALL}>All ({questions.length})</TabsTrigger>
-              <TabsTrigger value="ACTIVE">Active ({activeCount})</TabsTrigger>
-              <TabsTrigger value="INACTIVE">Inactive ({inactiveCount})</TabsTrigger>
+            <TabsList className="flex gap-1.5">
+              <TabsTrigger className="text-xs" value={FILTER_ALL}>All ({questions.length})</TabsTrigger>
+              <TabsTrigger className="text-xs" value="ACTIVE">Active ({activeCount})</TabsTrigger>
+              <TabsTrigger className="text-xs" value="INACTIVE">Inactive ({inactiveCount})</TabsTrigger>
             </TabsList>
           </Tabs>
 

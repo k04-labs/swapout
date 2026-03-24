@@ -1,11 +1,11 @@
 import type { QuestionOption } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { apiValidationError, handleApiError } from "@/lib/api-response";
+import { auditLog, getRequestMetadata } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
-
-type StartBody = {
-  employeeId?: string;
-};
+import { parseJsonBody } from "@/lib/validation/parse";
+import { assessmentStartSchema } from "@/lib/validation/schemas";
 
 function shuffle<T>(input: T[]): T[] {
   const array = [...input];
@@ -53,12 +53,11 @@ export async function POST(request: Request) {
   try {
     const subAdmin = await requireApprovedSubAdmin(request);
 
-    const body = (await request.json().catch(() => null)) as StartBody | null;
-    const employeeId = typeof body?.employeeId === "string" ? body.employeeId : "";
-
-    if (!employeeId) {
-      return NextResponse.json({ message: "employeeId is required." }, { status: 400 });
+    const parsedBody = await parseJsonBody(request, assessmentStartSchema);
+    if (!parsedBody.success) {
+      return apiValidationError(parsedBody.message, parsedBody.details);
     }
+    const { employeeId } = parsedBody.data;
 
     const employee = await prisma.employee.findFirst({
       where: {
@@ -94,6 +93,17 @@ export async function POST(request: Request) {
     });
 
     if (existingSession) {
+      auditLog({
+        event: "assessment_session_resumed",
+        actorId: subAdmin.id,
+        actorRole: "sub_admin",
+        metadata: {
+          sessionId: existingSession.id,
+          employeeId,
+          ...getRequestMetadata(request),
+        },
+      });
+
       return NextResponse.json({
         sessionId: existingSession.id,
         employeeId,
@@ -145,6 +155,17 @@ export async function POST(request: Request) {
       },
     });
 
+    auditLog({
+      event: "assessment_session_started",
+      actorId: subAdmin.id,
+      actorRole: "sub_admin",
+      metadata: {
+        sessionId: session.id,
+        employeeId,
+        ...getRequestMetadata(request),
+      },
+    });
+
     return NextResponse.json({
       sessionId: session.id,
       employeeId,
@@ -152,10 +173,6 @@ export async function POST(request: Request) {
       questions: formatQuestions(session.sessionQuestions),
     });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to start assessment." }, { status: 500 });
+    return handleApiError(error, "Failed to start assessment.", request);
   }
 }

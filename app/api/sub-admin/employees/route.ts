@@ -1,40 +1,9 @@
 import { NextResponse } from "next/server";
+import { apiValidationError, handleApiError } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
-
-type CreateEmployeeBody = {
-  fullName?: string;
-  department?: string;
-  jobRole?: string;
-  phoneNumber?: string;
-  site?: string;
-};
-
-function sanitizeField(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function validateEmployeeBody(body: CreateEmployeeBody) {
-  const fullName = sanitizeField(body.fullName);
-  const department = sanitizeField(body.department);
-  const jobRole = sanitizeField(body.jobRole);
-  const phoneNumber = sanitizeField(body.phoneNumber);
-  const site = sanitizeField(body.site);
-
-  if (!fullName || !department || !jobRole || !phoneNumber || !site) {
-    return { error: "All fields are required." };
-  }
-
-  return {
-    data: {
-      fullName,
-      department,
-      jobRole,
-      phoneNumber,
-      site,
-    },
-  };
-}
+import { parseJsonBody } from "@/lib/validation/parse";
+import { employeeCreateSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
 
@@ -61,11 +30,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ employees });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to fetch employees." }, { status: 500 });
+    return handleApiError(error, "Failed to fetch employees.", request);
   }
 }
 
@@ -73,19 +38,14 @@ export async function POST(request: Request) {
   try {
     const subAdmin = await requireApprovedSubAdmin(request);
 
-    const body = (await request.json().catch(() => null)) as CreateEmployeeBody | null;
-    if (!body) {
-      return NextResponse.json({ message: "Invalid request body." }, { status: 400 });
-    }
-
-    const validation = validateEmployeeBody(body);
-    if ("error" in validation) {
-      return NextResponse.json({ message: validation.error }, { status: 400 });
+    const parsedBody = await parseJsonBody(request, employeeCreateSchema);
+    if (!parsedBody.success) {
+      return apiValidationError(parsedBody.message, parsedBody.details);
     }
 
     const employee = await prisma.employee.create({
       data: {
-        ...validation.data,
+        ...parsedBody.data,
         subAdminId: subAdmin.id,
       },
       include: {
@@ -95,10 +55,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ employee }, { status: 201 });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to create employee." }, { status: 500 });
+    return handleApiError(error, "Failed to create employee.", request);
   }
 }

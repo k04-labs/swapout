@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Download, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -187,12 +187,30 @@ export function SuperAdminEmployeeReportClient({ employeeId }: { employeeId: str
             </p>
           </div>
 
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/super-admin/employees/${employeeId}`}>
-              <ArrowLeft data-icon="inline-start" />
-              Back To Profile
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" asChild>
+              <a href="/api/super-admin/export/csv">
+                <Download data-icon="inline-start" />
+                Export Platform CSV
+              </a>
+            </Button>
+            <Button size="sm" variant="outline" asChild>
+              <a
+                href={`/super-admin/employees/${employeeId}/report/print`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Printer data-icon="inline-start" />
+                Print Report
+              </a>
+            </Button>
+            <Button size="sm" variant="outline" asChild>
+              <Link href={`/super-admin/employees/${employeeId}`}>
+                <ArrowLeft data-icon="inline-start" />
+                Back To Profile
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
       </Card>
 

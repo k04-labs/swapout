@@ -1,34 +1,25 @@
 import { NextResponse } from "next/server";
+import { apiValidationError, handleApiError } from "@/lib/api-response";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
-
-type Params = {
-  id: string;
-};
-
-type UpdateEmployeeBody = {
-  fullName?: string;
-  department?: string;
-  jobRole?: string;
-  phoneNumber?: string;
-  site?: string;
-  isActive?: boolean;
-};
-
-function sanitizeField(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
-}
+import { parseJsonBody, parseParams } from "@/lib/validation/parse";
+import { employeeUpdateSchema, idParamSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
 
 export async function GET(
   request: Request,
   context: {
-    params: Promise<Params>;
+    params: Promise<{ id: string }>;
   },
 ) {
   try {
-    const { id } = await context.params;
+    const parsedParams = parseParams(await context.params, idParamSchema);
+    if (!parsedParams.success) {
+      return apiValidationError(parsedParams.message, parsedParams.details);
+    }
+    const { id } = parsedParams.data;
+
     const subAdmin = await requireApprovedSubAdmin(request);
 
     const employee = await prisma.employee.findFirst({
@@ -61,27 +52,28 @@ export async function GET(
 
     return NextResponse.json({ employee });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to fetch employee." }, { status: 500 });
+    return handleApiError(error, "Failed to fetch employee.", request);
   }
 }
 
 export async function PATCH(
   request: Request,
   context: {
-    params: Promise<Params>;
+    params: Promise<{ id: string }>;
   },
 ) {
   try {
-    const { id } = await context.params;
+    const parsedParams = parseParams(await context.params, idParamSchema);
+    if (!parsedParams.success) {
+      return apiValidationError(parsedParams.message, parsedParams.details);
+    }
+    const { id } = parsedParams.data;
+
     const subAdmin = await requireApprovedSubAdmin(request);
 
-    const body = (await request.json().catch(() => null)) as UpdateEmployeeBody | null;
-    if (!body) {
-      return NextResponse.json({ message: "Invalid request body." }, { status: 400 });
+    const parsedBody = await parseJsonBody(request, employeeUpdateSchema);
+    if (!parsedBody.success) {
+      return apiValidationError(parsedBody.message, parsedBody.details);
     }
 
     const existing = await prisma.employee.findFirst({
@@ -95,30 +87,7 @@ export async function PATCH(
       return NextResponse.json({ message: "Employee not found." }, { status: 404 });
     }
 
-    const updates = {
-      ...(body.fullName !== undefined ? { fullName: sanitizeField(body.fullName) } : {}),
-      ...(body.department !== undefined ? { department: sanitizeField(body.department) } : {}),
-      ...(body.jobRole !== undefined ? { jobRole: sanitizeField(body.jobRole) } : {}),
-      ...(body.phoneNumber !== undefined ? { phoneNumber: sanitizeField(body.phoneNumber) } : {}),
-      ...(body.site !== undefined ? { site: sanitizeField(body.site) } : {}),
-      ...(typeof body.isActive === "boolean" ? { isActive: body.isActive } : {}),
-    };
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ message: "No changes provided." }, { status: 400 });
-    }
-
-    const hasEmptyField = [
-      updates.fullName,
-      updates.department,
-      updates.jobRole,
-      updates.phoneNumber,
-      updates.site,
-    ].some((value) => value !== undefined && value.length === 0);
-
-    if (hasEmptyField) {
-      return NextResponse.json({ message: "All provided text fields must be non-empty." }, { status: 400 });
-    }
+    const updates = parsedBody.data;
 
     const employee = await prisma.employee.update({
       where: { id: existing.id },
@@ -130,10 +99,6 @@ export async function PATCH(
 
     return NextResponse.json({ employee });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to update employee." }, { status: 500 });
+    return handleApiError(error, "Failed to update employee.", request);
   }
 }

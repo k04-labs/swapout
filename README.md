@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SwapOut
 
-## Getting Started
+Behavioral-Based Safety (BBS) assessment platform with three-tier access:
 
-First, run the development server:
+1. `SuperAdmin` (username/password JWT)
+2. `SubAdmin` (Google SSO via Better Auth)
+3. `Employee` (no login, managed by SubAdmin)
 
+## Tech Stack
+
+1. Next.js 16 (App Router)
+2. Prisma + PostgreSQL
+3. Better Auth
+4. Tailwind CSS + shadcn/ui
+
+## Local Setup
+
+1. Install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Configure environment:
+```bash
+cp .env.example .env
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run migrations:
+```bash
+npm run prisma:migrate
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Seed bootstrap data (SuperAdmin + questions):
+```bash
+npm run prisma:seed
+```
 
-## Learn More
+5. Start dev server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Useful Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Type checks:
+```bash
+npm run typecheck
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. Lint:
+```bash
+npm run lint
+```
 
-## Deploy on Vercel
+3. Tests:
+```bash
+npm run test
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+4. Unit tests only:
+```bash
+npm run test:unit
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Phase 4 Highlights
+
+1. Platform CSV export:
+   - `GET /api/super-admin/export/csv`
+   - optional `?subAdminId=<id>`
+2. Print-ready SuperAdmin report:
+   - `/super-admin/employees/[id]/report/print`
+3. Rate-limited SuperAdmin login:
+   - 5 attempts per 15 minutes
+4. Zod validation for key mutation APIs
+5. Structured API error envelope + audit logging hooks
+
+## QA Assets
+
+1. Automated tests: `tests/unit/**`, `tests/integration/**`
+2. E2E scenarios checklist: [tests/e2e/happy-paths.md](/Users/mdkaifansari04/code/projects/swapout/tests/e2e/happy-paths.md)
+3. Deployment runbook: [docs/deployment-checklist.md](/Users/mdkaifansari04/code/projects/swapout/docs/deployment-checklist.md)
+

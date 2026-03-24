@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, FileText, Search } from "lucide-react";
+import { ArrowUpRight, Download, FileText, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -232,10 +232,24 @@ export function SuperAdminEmployeesClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Platform Employees</CardTitle>
-          <CardDescription>
-            Search and audit employee progress by site, department, and SubAdmin owner.
-          </CardDescription>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Platform Employees</CardTitle>
+              <CardDescription>
+                Search and audit employee progress by site, department, and SubAdmin owner.
+              </CardDescription>
+            </div>
+            <Button size="sm" variant="outline" asChild>
+              <a
+                href={`/api/super-admin/export/csv${
+                  subAdminId !== ALL_FILTER ? `?subAdminId=${encodeURIComponent(subAdminId)}` : ""
+                }`}
+              >
+                <Download data-icon="inline-start" />
+                Export CSV
+              </a>
+            </Button>
+          </div>
 
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <div className="relative">

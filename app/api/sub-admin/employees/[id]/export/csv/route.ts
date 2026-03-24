@@ -1,5 +1,7 @@
 import { stringify } from "csv-stringify/sync";
 import { NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-response";
+import { auditLog, getRequestMetadata } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
 import { normalizeCompetencyBreakdown } from "@/lib/reporting";
@@ -74,6 +76,17 @@ export async function GET(
       header: true,
     });
 
+    auditLog({
+      event: "sub_admin_employee_csv_exported",
+      actorId: subAdmin.id,
+      actorRole: "sub_admin",
+      metadata: {
+        employeeId: employee.id,
+        rowCount: rows.length,
+        ...getRequestMetadata(request),
+      },
+    });
+
     return new NextResponse(csv, {
       status: 200,
       headers: {
@@ -82,10 +95,6 @@ export async function GET(
       },
     });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
-    return NextResponse.json({ message: "Failed to export employee CSV." }, { status: 500 });
+    return handleApiError(error, "Failed to export employee CSV.", request);
   }
 }

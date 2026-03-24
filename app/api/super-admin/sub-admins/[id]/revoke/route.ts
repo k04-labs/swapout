@@ -1,22 +1,26 @@
 import { NextResponse } from "next/server"
+import { apiValidationError, handleApiError } from "@/lib/api-response"
+import { auditLog, getRequestMetadata } from "@/lib/audit"
 import { prisma } from "@/lib/prisma"
 import { requireSuperAdmin } from "@/lib/super-admin-auth"
-
-type Params = {
-  id: string
-}
+import { parseParams } from "@/lib/validation/parse"
+import { idParamSchema } from "@/lib/validation/schemas"
 
 export const runtime = "nodejs"
 
 export async function PATCH(
   request: Request,
   context: {
-    params: Promise<Params>
+    params: Promise<{ id: string }>
   },
 ) {
   try {
-    await requireSuperAdmin(request)
-    const { id } = await context.params
+    const session = await requireSuperAdmin(request)
+    const parsedParams = parseParams(await context.params, idParamSchema)
+    if (!parsedParams.success) {
+      return apiValidationError(parsedParams.message, parsedParams.details)
+    }
+    const { id } = parsedParams.data
 
     const existing = await prisma.user.findUnique({
       where: { id },
@@ -44,16 +48,18 @@ export async function PATCH(
       },
     })
 
+    auditLog({
+      event: "sub_admin_revoked_to_pending",
+      actorId: session.superAdminId,
+      actorRole: "super_admin",
+      metadata: {
+        targetSubAdminId: id,
+        ...getRequestMetadata(request),
+      },
+    })
+
     return NextResponse.json({ subAdmin: user })
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: (error as { status: number }).status },
-      )
-    }
-
-    return NextResponse.json({ message: "Failed to revoke sub-admin." }, { status: 500 })
+    return handleApiError(error, "Failed to revoke sub-admin.", request)
   }
 }
-

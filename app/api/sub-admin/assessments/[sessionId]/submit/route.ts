@@ -1,41 +1,36 @@
 import type { CompetencyCategory } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { apiValidationError, handleApiError } from "@/lib/api-response";
+import { auditLog, getRequestMetadata } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
 import { updateEmployeeReport } from "@/lib/reporting";
 import { computeRemark, defaultCompetencyBreakdown, roundToTwo } from "@/lib/scoring";
-
-type Params = {
-  sessionId: string;
-};
-
-type SubmitResponseItem = {
-  questionId?: string;
-  optionId?: string;
-};
-
-type SubmitBody = {
-  responses?: SubmitResponseItem[];
-};
+import { parseJsonBody, parseParams } from "@/lib/validation/parse";
+import { assessmentSubmitSchema, sessionIdParamSchema } from "@/lib/validation/schemas";
 
 export const runtime = "nodejs";
 
 export async function POST(
   request: Request,
   context: {
-    params: Promise<Params>;
+    params: Promise<{ sessionId: string }>;
   },
 ) {
   try {
-    const { sessionId } = await context.params;
+    const parsedParams = parseParams(await context.params, sessionIdParamSchema);
+    if (!parsedParams.success) {
+      return apiValidationError(parsedParams.message, parsedParams.details);
+    }
+    const { sessionId } = parsedParams.data;
+
     const subAdmin = await requireApprovedSubAdmin(request);
 
-    const body = (await request.json().catch(() => null)) as SubmitBody | null;
-    const responses = body?.responses;
-
-    if (!Array.isArray(responses) || responses.length === 0) {
-      return NextResponse.json({ message: "responses are required." }, { status: 400 });
+    const parsedBody = await parseJsonBody(request, assessmentSubmitSchema);
+    if (!parsedBody.success) {
+      return apiValidationError(parsedBody.message, parsedBody.details);
     }
+    const { responses } = parsedBody.data;
 
     const session = await prisma.assessmentSession.findFirst({
       where: {
@@ -79,12 +74,7 @@ export async function POST(
     const responseByQuestion = new Map<string, { optionId: string }>();
 
     for (const item of responses) {
-      const questionId = typeof item.questionId === "string" ? item.questionId : "";
-      const optionId = typeof item.optionId === "string" ? item.optionId : "";
-
-      if (!questionId || !optionId) {
-        return NextResponse.json({ message: "Each response must include questionId and optionId." }, { status: 400 });
-      }
+      const { questionId, optionId } = item;
 
       if (responseByQuestion.has(questionId)) {
         return NextResponse.json({ message: "Duplicate question responses are not allowed." }, { status: 400 });
@@ -179,6 +169,20 @@ export async function POST(
 
     await updateEmployeeReport(session.employeeId);
 
+    auditLog({
+      event: "assessment_submitted",
+      actorId: subAdmin.id,
+      actorRole: "sub_admin",
+      metadata: {
+        sessionId: session.id,
+        submissionId: submission.id,
+        employeeId: session.employeeId,
+        totalScore,
+        remarkScore: remarkData.remarkScore,
+        ...getRequestMetadata(request),
+      },
+    });
+
     return NextResponse.json({
       success: true,
       submissionId: submission.id,
@@ -188,14 +192,10 @@ export async function POST(
       remarkScore: remarkData.remarkScore,
     });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json({ message: error.message }, { status: (error as { status: number }).status });
-    }
-
     if (error instanceof Error && error.message.includes("Session is no longer in progress")) {
       return NextResponse.json({ message: error.message }, { status: 409 });
     }
 
-    return NextResponse.json({ message: "Failed to submit assessment." }, { status: 500 });
+    return handleApiError(error, "Failed to submit assessment.", request);
   }
 }
