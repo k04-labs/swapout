@@ -5,6 +5,7 @@ import { Plus, RotateCcw, Save, Search, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -480,16 +481,27 @@ export function SuperAdminQuestionsClient() {
         </CardContent>
       </Card>
 
-      {formOpen ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingId ? "Edit Question" : "Create Question"}</CardTitle>
-            <CardDescription>
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (!saving) {
+              closeForm();
+            }
+            return;
+          }
+          setFormOpen(true);
+        }}
+      >
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{editingId ? "Edit Question" : "Create Question"}</DialogTitle>
+            <DialogDescription>
               Configure question copy, competency, difficulty, and scoring options.
-            </CardDescription>
-          </CardHeader>
+            </DialogDescription>
+          </DialogHeader>
 
-          <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <p className="text-xs font-medium text-muted-foreground">Question Text</p>
               <Textarea
@@ -639,9 +651,9 @@ export function SuperAdminQuestionsClient() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
-        </Card>
-      ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

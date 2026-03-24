@@ -27,6 +27,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { RemarkBadge } from "@/components/sub-admin/remark-badge";
 import { ScoreBadge } from "@/components/sub-admin/score-badge";
 
@@ -331,137 +338,148 @@ export function EmployeesClient() {
         </div>
       ) : null}
 
-      {formOpen ? (
-        <div className="rounded-md border border-border bg-card overflow-hidden">
-          <div className="border-b border-border px-5 py-3">
-            <p className="text-sm font-medium text-foreground">
-              {editingEmployee ? "Edit Employee" : "Add Employee"}
-            </p>
-          </div>
-          <div className="p-5">
-            <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="fullName"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Full Name
-                </Label>
-                <Input
-                  id="fullName"
-                  value={formState.fullName}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      fullName: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            if (!saving) {
+              closeForm();
+            }
+            return;
+          }
+          setFormOpen(true);
+        }}
+      >
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{editingEmployee ? "Edit Employee" : "Add Employee"}</DialogTitle>
+            <DialogDescription>
+              Capture employee details used for assessments and reporting.
+            </DialogDescription>
+          </DialogHeader>
 
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="department"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Department
-                </Label>
-                <Input
-                  id="department"
-                  value={formState.department}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      department: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+          <form className="grid gap-4 sm:grid-cols-2" onSubmit={onSubmit}>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="fullName"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Full Name
+              </Label>
+              <Input
+                id="fullName"
+                value={formState.fullName}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    fullName: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
 
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="jobRole"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Job Role
-                </Label>
-                <Input
-                  id="jobRole"
-                  value={formState.jobRole}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      jobRole: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="department"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Department
+              </Label>
+              <Input
+                id="department"
+                value={formState.department}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    department: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
 
-              <div className="space-y-1.5">
-                <Label
-                  htmlFor="phoneNumber"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Phone Number
-                </Label>
-                <Input
-                  id="phoneNumber"
-                  value={formState.phoneNumber}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      phoneNumber: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="jobRole"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Job Role
+              </Label>
+              <Input
+                id="jobRole"
+                value={formState.jobRole}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    jobRole: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label
-                  htmlFor="site"
-                  className="text-xs font-medium text-muted-foreground"
-                >
-                  Site / Location
-                </Label>
-                <Input
-                  id="site"
-                  value={formState.site}
-                  onChange={(event) =>
-                    setFormState((prev) => ({
-                      ...prev,
-                      site: event.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="phoneNumber"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Phone Number
+              </Label>
+              <Input
+                id="phoneNumber"
+                value={formState.phoneNumber}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    phoneNumber: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
 
-              <div className="sm:col-span-2 flex flex-wrap gap-2 pt-2">
-                <Button type="submit" size="sm" disabled={saving}>
-                  {saving
-                    ? "Saving..."
-                    : editingEmployee
-                      ? "Save Changes"
-                      : "Create Employee"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={closeForm}
-                  disabled={saving}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      ) : null}
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label
+                htmlFor="site"
+                className="text-xs font-medium text-muted-foreground"
+              >
+                Site / Location
+              </Label>
+              <Input
+                id="site"
+                value={formState.site}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    site: event.target.value,
+                  }))
+                }
+                required
+              />
+            </div>
+
+            <div className="sm:col-span-2 flex flex-wrap gap-2 pt-2">
+              <Button type="submit" size="sm" disabled={saving}>
+                {saving
+                  ? "Saving..."
+                  : editingEmployee
+                    ? "Save Changes"
+                    : "Create Employee"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={closeForm}
+                disabled={saving}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
