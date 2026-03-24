@@ -23,7 +23,7 @@ export default async function SuperAdminLayout({
 
   return (
     <AppShell
-      title="SuperAdmin Control Center"
+      title=""
       roleLabel="SuperAdmin"
       userName={superAdmin?.username ?? "SuperAdmin"}
       userEmail={superAdmin?.username ? `${superAdmin.username}@swapout.local` : undefined}

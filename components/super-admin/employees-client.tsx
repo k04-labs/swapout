@@ -537,7 +537,6 @@ export function SuperAdminEmployeesClient() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <Users className="size-6 text-primary" />
             All Employees
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
