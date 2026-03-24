@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Script from "next/script";
 import "./globals.css";
 import { Geist, Prata } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,9 @@ export default function RootLayout({
       className={cn("h-full antialiased", geist.variable, prata.variable)}
     >
       <body className="min-h-full flex flex-col bg-background dark:bg-black text-foreground">
-        <script
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `try{if(localStorage.getItem("theme")==="dark")document.documentElement.classList.add("dark")}catch(e){}`,
           }}
