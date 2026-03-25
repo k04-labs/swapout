@@ -3,8 +3,12 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/prisma";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const baseURL =
-  process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  process.env.BETTER_AUTH_URL ??
+  process.env.NEXT_PUBLIC_APP_URL ??
+  "http://localhost:3000";
 const authSecret =
   process.env.BETTER_AUTH_SECRET ??
   "Qf9s0D2k7Pz1xL8mVb4nR6tY3wA5uC1eH9jN2gK7pS4dF8hM";
@@ -29,4 +33,9 @@ export const auth = betterAuth({
         },
       }
     : undefined,
+  cookies: {
+    secure: isProd ? true : false,
+    sameSite: isProd ? "none" : "lax",
+    domain: isProd ? "swapout.k04.tech" : undefined,
+  },
 });
