@@ -48,3 +48,5 @@ export function useAppQuery<TData, TSelect = TData>({
     },
   });
 }
+
+
