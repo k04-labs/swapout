@@ -33,9 +33,8 @@ export const auth = betterAuth({
         },
       }
     : undefined,
-  cookies: {
-    secure: isProd ? true : false,
-    sameSite: isProd ? "none" : "lax",
-    domain: isProd ? "swapout.k04.tech" : undefined,
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: isProd,
   },
 });
