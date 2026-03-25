@@ -5,7 +5,11 @@ import { SUPER_ADMIN_COOKIE } from "@/lib/super-admin-auth";
 function hasSubAdminSessionCookie(request: NextRequest): boolean {
   return request.cookies
     .getAll()
-    .some((cookie) => cookie.name.startsWith("better-auth"));
+    .some(
+      (cookie) =>
+        cookie.name.startsWith("better-auth") ||
+        cookie.name.startsWith("__Secure-better-auth"),
+    );
 }
 
 export function proxy(request: NextRequest) {
@@ -15,13 +19,20 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const hasSuperAdminToken = Boolean(request.cookies.get(SUPER_ADMIN_COOKIE)?.value);
+  const hasSuperAdminToken = Boolean(
+    request.cookies.get(SUPER_ADMIN_COOKIE)?.value,
+  );
 
   if (pathname === "/super-admin/login" && hasSuperAdminToken) {
-    return NextResponse.redirect(new URL("/super-admin/dashboard", request.url));
+    return NextResponse.redirect(
+      new URL("/super-admin/dashboard", request.url),
+    );
   }
 
-  if (pathname.startsWith("/super-admin") && !pathname.startsWith("/super-admin/login")) {
+  if (
+    pathname.startsWith("/super-admin") &&
+    !pathname.startsWith("/super-admin/login")
+  ) {
     if (!hasSuperAdminToken) {
       return NextResponse.redirect(new URL("/super-admin/login", request.url));
     }
