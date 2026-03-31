@@ -1,33 +1,38 @@
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import {
-  getSubAdminFromServer,
-  getSubAdminRedirect,
-} from "@/lib/sub-admin-auth";
+import { getSubAdminFromServer, getSubAdminRedirect } from "@/lib/sub-admin-auth";
 
 type PageParams = {
   id: string;
 };
 
-function formatDate(value: Date | null | undefined): string {
+type SearchParams = {
+  reportId?: string;
+};
+
+function formatDate(value: Date | string | null | undefined): string {
   if (!value) return "N/A";
-  return value.toLocaleDateString(undefined, {
+  return new Date(value).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 }
 
-function formatScore(value: number | null | undefined): string {
-  return typeof value === "number" ? `${value.toFixed(2)} / 5` : "N/A";
+function toLines(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((entry): entry is string => typeof entry === "string");
 }
 
 export default async function SubAdminEmployeeReportPrintPage({
   params,
+  searchParams,
 }: {
   params: Promise<PageParams>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const { reportId } = await searchParams;
   const subAdmin = await getSubAdminFromServer();
 
   if (!subAdmin) {
@@ -38,36 +43,51 @@ export default async function SubAdminEmployeeReportPrintPage({
     redirect(getSubAdminRedirect(subAdmin.approvalStatus));
   }
 
-  const employee = await prisma.employee.findFirst({
+  if (!reportId) {
+    notFound();
+  }
+
+  const report = await prisma.assessmentAiReport.findFirst({
     where: {
-      id,
+      id: reportId,
+      employeeId: id,
       subAdminId: subAdmin.id,
     },
     include: {
-      report: true,
-      submissions: {
-        include: {
-          _count: {
-            select: {
-              responses: true,
-            },
-          },
+      employee: {
+        select: {
+          id: true,
+          fullName: true,
+          department: true,
+          jobRole: true,
+          site: true,
+          createdAt: true,
         },
-        orderBy: {
-          submittedAt: "desc",
+      },
+      submission: {
+        select: {
+          submittedAt: true,
+          totalScore: true,
+          remark: true,
+          remarkScore: true,
         },
       },
     },
   });
 
-  if (!employee) {
+  if (!report) {
     notFound();
   }
+
+  const reportJson = report.report as Record<string, unknown>;
+  const strengths = toLines(reportJson.strengths);
+  const improvements = toLines(reportJson.improvements);
+  const observations = toLines(reportJson.overallObservations);
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 bg-white px-4 py-6 text-slate-900 print:max-w-none print:px-0 print:py-0">
       <header className="border-b border-slate-200 pb-4">
-        <h1 className="text-2xl font-bold">SwapOut Employee Progress Report</h1>
+        <h1 className="text-2xl font-bold">SwapOut AI Safety Report</h1>
         <p className="mt-1 text-sm text-slate-600">
           Generated on {formatDate(new Date())}
         </p>
@@ -75,106 +95,59 @@ export default async function SubAdminEmployeeReportPrintPage({
 
       <section className="grid gap-3 rounded-md border border-slate-200 p-4 text-sm sm:grid-cols-2">
         <p>
-          <span className="font-semibold text-slate-700">Employee:</span>{" "}
-          {employee.fullName}
+          <span className="font-semibold text-slate-700">Employee:</span> {report.employee.fullName}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Department:</span>{" "}
-          {employee.department}
+          <span className="font-semibold text-slate-700">Department:</span> {report.employee.department || "N/A"}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Job Role:</span>{" "}
-          {employee.jobRole}
+          <span className="font-semibold text-slate-700">Job Role:</span> {report.employee.jobRole || "N/A"}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Phone:</span>{" "}
-          {employee.phoneNumber}
+          <span className="font-semibold text-slate-700">Site:</span> {report.employee.site || "N/A"}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Site:</span>{" "}
-          {employee.site}
+          <span className="font-semibold text-slate-700">Assessment Date:</span> {formatDate(report.submission.submittedAt)}
         </p>
         <p>
-          <span className="font-semibold text-slate-700">Enrolled:</span>{" "}
-          {formatDate(employee.createdAt)}
+          <span className="font-semibold text-slate-700">Score:</span> {report.submission.totalScore.toFixed(2)} / 5
         </p>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="rounded-md border border-slate-200 p-4">
+        <h2 className="text-lg font-semibold">AI Summary</h2>
+        <p className="mt-2 text-sm text-slate-700">
+          {typeof reportJson.summary === "string" ? reportJson.summary : "No AI summary available."}
+        </p>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-md border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
-            Total Submissions
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {employee.report?.totalSubmissions ?? 0}
-          </p>
+          <h3 className="text-sm font-semibold">Strengths</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            {strengths.length > 0 ? strengths.map((item, index) => <li key={`s-${index}`}>{item}</li>) : <li>No strengths listed.</li>}
+          </ul>
         </div>
         <div className="rounded-md border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
-            Latest Score
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {formatScore(employee.report?.latestScore)}
-          </p>
-        </div>
-        <div className="rounded-md border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
-            Average Score
-          </p>
-          <p className="mt-2 text-xl font-semibold">
-            {formatScore(employee.report?.averageScore)}
-          </p>
-        </div>
-        <div className="rounded-md border border-slate-200 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
-            Trend
-          </p>
-          <p className="mt-2 text-xl font-semibold capitalize">
-            {employee.report?.trend ?? "Stable"}
-          </p>
+          <h3 className="text-sm font-semibold">Improvements</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+            {improvements.length > 0 ? improvements.map((item, index) => <li key={`i-${index}`}>{item}</li>) : <li>No improvement areas listed.</li>}
+          </ul>
         </div>
       </section>
 
-      <section className="rounded-md border border-slate-200">
-        <div className="border-b border-slate-200 px-4 py-3">
-          <h2 className="text-lg font-semibold">Assessment History</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
-              <tr>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Score</th>
-                <th className="px-3 py-2">Remark</th>
-                <th className="px-3 py-2">Questions Answered</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employee.submissions.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-3 text-slate-500" colSpan={4}>
-                    No submissions recorded yet.
-                  </td>
-                </tr>
-              ) : (
-                employee.submissions.map((submission) => (
-                  <tr key={submission.id} className="border-t border-slate-200">
-                    <td className="px-3 py-2">
-                      {formatDate(submission.submittedAt)}
-                    </td>
-                    <td className="px-3 py-2">
-                      {formatScore(submission.totalScore)}
-                    </td>
-                    <td className="px-3 py-2">
-                      {submission.remarkScore} • {submission.remark}
-                    </td>
-                    <td className="px-3 py-2">{submission._count.responses}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      <section className="rounded-md border border-slate-200 p-4">
+        <h3 className="text-sm font-semibold">Observations</h3>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+          {observations.length > 0 ? observations.map((item, index) => <li key={`o-${index}`}>{item}</li>) : <li>No observations listed.</li>}
+        </ul>
+      </section>
+
+      <section className="rounded-md border border-slate-200 p-4">
+        <h3 className="text-sm font-semibold">Raw AI JSON</h3>
+        <pre className="mt-2 overflow-auto rounded border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700">
+          {JSON.stringify(report.report, null, 2)}
+        </pre>
       </section>
     </div>
   );

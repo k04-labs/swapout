@@ -1,25 +1,31 @@
 "use client";
 
-import { useMemo } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { CompetencyBarChart } from "@/components/sub-admin/competency-bar-chart";
-import { RemarkBadge } from "@/components/sub-admin/remark-badge";
-import { ScoreBadge } from "@/components/sub-admin/score-badge";
-import { ScoreTrendChart } from "@/components/sub-admin/score-trend-chart";
-import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
 import { useAppQuery } from "@/hooks/query";
 
+type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+type AiReportShape = {
+  generatedAt?: string;
+  summary?: string;
+  riskLevel?: RiskLevel;
+  strengths?: string[];
+  improvements?: string[];
+  overallObservations?: string[];
+  actionPlan?: Array<{
+    priority?: "LOW" | "MEDIUM" | "HIGH";
+    action?: string;
+    rationale?: string;
+    timeline?: string;
+  }>;
+  coachingMessage?: string;
+};
+
 type ReportPayload = {
-  message?: string;
   employee: {
     id: string;
     fullName: string;
@@ -27,30 +33,21 @@ type ReportPayload = {
     jobRole: string;
     site: string;
   };
-  report: {
-    totalSubmissions: number;
-    latestScore: number | null;
-    latestRemark: string | null;
-    latestRemarkScore: number | null;
-    latestRemarkDescription: string | null;
-    averageScore: number | null;
-    trend: "improving" | "declining" | "stable" | null;
-  } | null;
-  submissions: Array<{
+  reports: Array<{
     id: string;
-    submittedAt: string;
-    totalScore: number;
-    remark: string;
-    remarkScore: number;
-    _count: {
-      responses: number;
+    provider: string;
+    model: string;
+    createdAt: string;
+    updatedAt: string;
+    submission: {
+      id: string;
+      submittedAt: string;
+      totalScore: number;
+      remark: string;
+      remarkScore: number;
     };
+    report: AiReportShape;
   }>;
-  trendSeries: Array<{
-    date: string;
-    score: number;
-  }>;
-  competencyAverage: Record<string, number>;
 };
 
 function formatDate(value: string): string {
@@ -61,224 +58,165 @@ function formatDate(value: string): string {
   });
 }
 
-function toLabel(category: string): string {
-  return category.replaceAll("_", " ");
+function riskVariant(risk: RiskLevel | undefined): "success" | "warning" | "danger" | "outline" {
+  if (risk === "LOW") return "success";
+  if (risk === "MEDIUM") return "warning";
+  if (risk === "HIGH") return "danger";
+  return "outline";
+}
+
+function ReportSkeleton() {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-52" />
+          <Skeleton className="h-4 w-72" />
+        </CardHeader>
+      </Card>
+      {Array.from({ length: 2 }).map((_, index) => (
+        <Card key={`ai-report-skeleton-${index}`}>
+          <CardHeader>
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-64" />
+          </CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
 export function ReportClient({ employeeId }: { employeeId: string }) {
   const reportQuery = useAppQuery<ReportPayload>({
-    queryKey: ["sub-admin-report", employeeId],
+    queryKey: ["sub-admin-employee-ai-reports", employeeId],
     url: `/api/sub-admin/employees/${employeeId}/report`,
-    fallbackError: "Failed to load report.",
+    fallbackError: "Failed to load AI reports.",
   });
-  const data = reportQuery.data;
-  const loading = reportQuery.isLoading;
-  const error = reportQuery.error?.message ?? null;
 
-  const competencyData = useMemo(() => {
-    if (!data) return [];
+  const data = reportQuery.data ?? null;
 
-    return Object.entries(data.competencyAverage).map(([key, score]) => ({
-      category: toLabel(key),
-      score,
-    }));
-  }, [data]);
-
-  const trendData = useMemo(() => {
-    if (!data) return [];
-
-    return data.trendSeries.map((item) => ({
-      date: formatDate(item.date),
-      score: item.score,
-    }));
-  }, [data]);
-
-  if (loading) {
-    return (
-      <div className="rounded-md border border-border bg-card p-4">
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-6 w-44" />
-          <Skeleton className="h-4 w-72" />
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={`report-stat-${index}`} className="h-24 w-full" />
-            ))}
-          </div>
-          <Skeleton className="h-44 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-md border border-red-200/80 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20 p-6">
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-      </div>
-    );
+  if (reportQuery.isLoading) {
+    return <ReportSkeleton />;
   }
 
   if (!data) {
     return (
-      <div className="rounded-md border border-border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">Report unavailable.</p>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Unable to load reports</CardTitle>
+          <CardDescription>
+            {reportQuery.error?.message ?? "No report data available."}
+          </CardDescription>
+        </CardHeader>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="font-heading text-xl text-foreground">
-            {data.employee.fullName}
-          </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {data.employee.department} · {data.employee.jobRole} ·{" "}
-            {data.employee.site}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href={`/api/sub-admin/employees/${employeeId}/export/csv`}>
-              Export CSV
-            </a>
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle>{data.employee.fullName}</CardTitle>
+            <CardDescription>
+              {data.employee.department} · {data.employee.jobRole} · {data.employee.site}
+            </CardDescription>
+          </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/sub-admin/employees/${employeeId}`}>Open Employee Profile</Link>
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <a
-              href={`/sub-admin/employees/${employeeId}/report/print`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Print Report
-            </a>
-          </Button>
-        </div>
-      </div>
+        </CardHeader>
+      </Card>
 
-      {/* Stat cards */}
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Total Submissions
-          </p>
-          <p className="mt-1 font-heading text-2xl text-foreground">
-            {data.report?.totalSubmissions ?? 0}
-          </p>
-        </div>
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Latest Score
-          </p>
-          <div className="mt-1">
-            <ScoreBadge score={data.report?.latestScore ?? null} />
-          </div>
-        </div>
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Average Score
-          </p>
-          <div className="mt-1">
-            <ScoreBadge score={data.report?.averageScore ?? null} />
-          </div>
-        </div>
-        <div className="rounded-md border border-border bg-card p-4">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Latest Remark
-          </p>
-          <div className="mt-1">
-            <RemarkBadge
-              remarkScore={data.report?.latestRemarkScore ?? null}
-              remark={data.report?.latestRemark ?? null}
-            />
-          </div>
-        </div>
-      </section>
+      {data.reports.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No AI reports generated yet. Submit an assessment to generate the first report.
+          </CardContent>
+        </Card>
+      ) : (
+        data.reports.map((item) => (
+          <Card key={item.id}>
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="text-base">Assessment: {formatDate(item.submission.submittedAt)}</CardTitle>
+                <CardDescription>
+                  Score {item.submission.totalScore.toFixed(2)} / 5 · {item.submission.remark} ({item.submission.remarkScore}/5)
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={riskVariant(item.report.riskLevel)}>
+                  {item.report.riskLevel ?? "UNKNOWN"} RISK
+                </Badge>
+                <Badge variant="outline">
+                  {item.provider}:{item.model}
+                </Badge>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/sub-admin/employees/${employeeId}/report/print?reportId=${item.id}`}>
+                    Download PDF
+                  </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Summary</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {item.report.summary ?? "No summary provided by AI model."}
+                </p>
+              </div>
 
-      {/* Trend summary */}
-      <div className="rounded-md border border-border bg-card p-5">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Trend Summary
-        </h3>
-        <div className="mt-2 flex items-center gap-3">
-          <TrendIndicator trend={data.report?.trend ?? "stable"} />
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {data.report?.latestRemarkDescription ??
-            "No remark description available yet."}
-        </p>
-      </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Strengths</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-foreground">
+                    {(item.report.strengths ?? []).length > 0 ? (
+                      item.report.strengths?.map((strength, index) => (
+                        <li key={`strength-${item.id}-${index}`}>{strength}</li>
+                      ))
+                    ) : (
+                      <li>No strengths listed.</li>
+                    )}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Improvements</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-foreground">
+                    {(item.report.improvements ?? []).length > 0 ? (
+                      item.report.improvements?.map((improvement, index) => (
+                        <li key={`improvement-${item.id}-${index}`}>{improvement}</li>
+                      ))
+                    ) : (
+                      <li>No improvement areas listed.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
 
-      {/* Charts */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <div className="rounded-md border border-border bg-card p-5">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Score Trend
-          </h3>
-          <ScoreTrendChart data={trendData} />
-        </div>
-        <div className="rounded-md border border-border bg-card p-5">
-          <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Competency Breakdown
-          </h3>
-          <CompetencyBarChart data={competencyData} />
-        </div>
-      </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Coach Message</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {item.report.coachingMessage ?? "No coaching note available."}
+                </p>
+              </div>
 
-      {/* Assessment history */}
-      <div className="rounded-md border border-border bg-card">
-        <div className="border-b border-border px-5 py-3">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Assessment History
-          </h3>
-        </div>
-        {data.submissions.length === 0 ? (
-          <p className="px-5 py-6 text-center text-sm text-muted-foreground">
-            No submissions yet.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Date
-                </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Score
-                </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Remark
-                </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Questions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.submissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell className="text-foreground">
-                    {formatDate(submission.submittedAt)}
-                  </TableCell>
-                  <TableCell>
-                    <ScoreBadge score={submission.totalScore} />
-                  </TableCell>
-                  <TableCell>
-                    <RemarkBadge
-                      remarkScore={submission.remarkScore}
-                      remark={submission.remark}
-                    />
-                  </TableCell>
-                  <TableCell className="text-foreground">
-                    {submission._count.responses}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+              <details className="rounded-md border border-border bg-muted/30 p-3">
+                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  View Raw AI JSON
+                </summary>
+                <pre className="mt-2 overflow-auto rounded-md bg-card p-3 text-xs text-foreground">
+                  {JSON.stringify(item.report, null, 2)}
+                </pre>
+              </details>
+            </CardContent>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

@@ -5,6 +5,9 @@ const trimmedString = z
   .trim()
   .min(1, { message: "Field is required." })
 
+const optionalEmployeeField = (max: number) =>
+  z.string().trim().max(max).optional()
+
 export const idParamSchema = z.object({
   id: trimmedString,
 })
@@ -20,19 +23,19 @@ export const superAdminLoginSchema = z.object({
 
 export const employeeCreateSchema = z.object({
   fullName: trimmedString.max(120),
-  department: trimmedString.max(120),
-  jobRole: trimmedString.max(120),
-  phoneNumber: trimmedString.max(32),
-  site: trimmedString.max(120),
+  department: optionalEmployeeField(120).default(""),
+  jobRole: optionalEmployeeField(120).default(""),
+  phoneNumber: optionalEmployeeField(32).default(""),
+  site: optionalEmployeeField(120).default(""),
 })
 
 export const employeeUpdateSchema = z
   .object({
-    fullName: trimmedString.max(120).optional(),
-    department: trimmedString.max(120).optional(),
-    jobRole: trimmedString.max(120).optional(),
-    phoneNumber: trimmedString.max(32).optional(),
-    site: trimmedString.max(120).optional(),
+    fullName: z.string().trim().min(1, { message: "Name is required." }).max(120).optional(),
+    department: optionalEmployeeField(120),
+    jobRole: optionalEmployeeField(120),
+    phoneNumber: optionalEmployeeField(32),
+    site: optionalEmployeeField(120),
     isActive: z.boolean().optional(),
   })
   .refine(
@@ -104,3 +107,8 @@ export const questionUpdateSchema = z
     },
   )
 
+export const aiReportUpdateSchema = z.object({
+  report: z.unknown(),
+  provider: z.string().trim().max(80).optional(),
+  model: z.string().trim().max(120).optional(),
+})

@@ -29,7 +29,7 @@ function requireEnv(name: string): string {
 
 async function seedSuperAdmin() {
   const username = requireEnv("ADMIN_USERNAME");
-  const initialPassword = requireEnv("ADMIN_INITIAL_PASSWORD");
+  const initialPassword = process.env.ADMIN_INITIAL_PASSWORD?.trim() || "password";
   const passwordHash = await bcrypt.hash(initialPassword, 12);
 
   await prisma.superAdmin.upsert({

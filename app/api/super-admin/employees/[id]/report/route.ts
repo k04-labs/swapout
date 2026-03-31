@@ -1,29 +1,35 @@
-import type { CompetencyCategory } from "@prisma/client"
-import { NextResponse } from "next/server"
-import { normalizeCompetencyBreakdown } from "@/lib/reporting"
-import { prisma } from "@/lib/prisma"
-import { defaultCompetencyBreakdown, getRemarkFromScoreBand, roundToTwo } from "@/lib/scoring"
-import { requireSuperAdmin } from "@/lib/super-admin-auth"
+import { NextResponse } from "next/server";
+import { handleApiError } from "@/lib/api-response";
+import { prisma } from "@/lib/prisma";
+import { requireSuperAdmin } from "@/lib/super-admin-auth";
 
 type Params = {
-  id: string
-}
+  id: string;
+};
 
-export const runtime = "nodejs"
+export const runtime = "nodejs";
 
 export async function GET(
   request: Request,
   context: {
-    params: Promise<Params>
+    params: Promise<Params>;
   },
 ) {
   try {
-    await requireSuperAdmin(request)
-    const { id } = await context.params
+    await requireSuperAdmin(request);
+    const { id } = await context.params;
 
     const employee = await prisma.employee.findUnique({
-      where: { id },
-      include: {
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        department: true,
+        jobRole: true,
+        site: true,
+        createdAt: true,
         subAdmin: {
           select: {
             id: true,
@@ -32,80 +38,54 @@ export async function GET(
             approvalStatus: true,
           },
         },
-        report: true,
       },
-    })
+    });
 
     if (!employee) {
-      return NextResponse.json({ message: "Employee not found." }, { status: 404 })
+      return NextResponse.json({ message: "Employee not found." }, { status: 404 });
     }
 
-    const submissions = await prisma.assessmentSubmission.findMany({
+    const reports = await prisma.assessmentAiReport.findMany({
       where: {
         employeeId: employee.id,
       },
       include: {
-        _count: {
+        submission: {
           select: {
-            responses: true,
+            id: true,
+            submittedAt: true,
+            totalScore: true,
+            remark: true,
+            remarkScore: true,
+          },
+        },
+        subAdmin: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
           },
         },
       },
       orderBy: {
-        submittedAt: "desc",
+        createdAt: "desc",
       },
-    })
-
-    const competencyTotals = defaultCompetencyBreakdown()
-    const competencyCounts = defaultCompetencyBreakdown()
-
-    for (const submission of submissions) {
-      const breakdown = normalizeCompetencyBreakdown(submission.competencyBreakdown)
-
-      for (const key of Object.keys(competencyTotals) as CompetencyCategory[]) {
-        const value = breakdown[key]
-        if (value > 0) {
-          competencyTotals[key] += value
-          competencyCounts[key] += 1
-        }
-      }
-    }
-
-    const competencyAverage = defaultCompetencyBreakdown()
-    for (const key of Object.keys(competencyAverage) as CompetencyCategory[]) {
-      const count = competencyCounts[key]
-      competencyAverage[key] = count > 0 ? roundToTwo(competencyTotals[key] / count) : 0
-    }
-
-    const trendSeries = [...submissions].reverse().map((submission) => ({
-      date: submission.submittedAt,
-      score: roundToTwo(submission.totalScore),
-      remark: submission.remark,
-    }))
-
-    const latestRemarkMeta = getRemarkFromScoreBand(employee.report?.latestRemarkScore ?? null)
+    });
 
     return NextResponse.json({
       employee,
-      report: employee.report
-        ? {
-            ...employee.report,
-            latestRemarkDescription: latestRemarkMeta?.description ?? null,
-          }
-        : null,
-      submissions,
-      trendSeries,
-      competencyAverage,
-    })
+      reports: reports.map((report) => ({
+        id: report.id,
+        provider: report.provider,
+        model: report.model,
+        createdAt: report.createdAt,
+        updatedAt: report.updatedAt,
+        submission: report.submission,
+        subAdmin: report.subAdmin,
+        report: report.report,
+      })),
+    });
   } catch (error) {
-    if (error instanceof Error && "status" in error) {
-      return NextResponse.json(
-        { message: error.message },
-        { status: (error as { status: number }).status },
-      )
-    }
-
-    return NextResponse.json({ message: "Failed to fetch employee report." }, { status: 500 })
+    return handleApiError(error, "Failed to fetch AI reports.", request);
   }
 }
-

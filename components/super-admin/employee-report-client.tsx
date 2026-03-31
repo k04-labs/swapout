@@ -1,18 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { ArrowLeft, Download, Printer } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CompetencyBarChart } from "@/components/sub-admin/competency-bar-chart";
-import { RemarkBadge } from "@/components/sub-admin/remark-badge";
-import { ScoreBadge } from "@/components/sub-admin/score-badge";
-import { ScoreTrendChart } from "@/components/sub-admin/score-trend-chart";
-import { TrendIndicator } from "@/components/sub-admin/trend-indicator";
+import { Textarea } from "@/components/ui/textarea";
+import { useAppMutation } from "@/hooks/mutation";
 import { useAppQuery } from "@/hooks/query";
+import { apiClient } from "@/lib/api-client";
+
+type RiskLevel = "LOW" | "MEDIUM" | "HIGH";
+
+type AiReportShape = {
+  generatedAt?: string;
+  summary?: string;
+  riskLevel?: RiskLevel;
+  strengths?: string[];
+  improvements?: string[];
+  overallObservations?: string[];
+  actionPlan?: Array<{
+    priority?: "LOW" | "MEDIUM" | "HIGH";
+    action?: string;
+    rationale?: string;
+    timeline?: string;
+  }>;
+  coachingMessage?: string;
+};
 
 type Payload = {
   employee: {
@@ -28,32 +45,26 @@ type Payload = {
       approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
     };
   };
-  report: {
-    totalSubmissions: number;
-    latestScore: number | null;
-    latestRemark: string | null;
-    latestRemarkScore: number | null;
-    latestRemarkDescription: string | null;
-    averageScore: number | null;
-    trend: "improving" | "declining" | "stable" | null;
-  } | null;
-  submissions: Array<{
+  reports: Array<{
     id: string;
-    submittedAt: string;
-    totalScore: number;
-    remark: string;
-    remarkScore: number;
-    _count: {
-      responses: number;
+    provider: string;
+    model: string;
+    createdAt: string;
+    updatedAt: string;
+    submission: {
+      id: string;
+      submittedAt: string;
+      totalScore: number;
+      remark: string;
+      remarkScore: number;
     };
+    subAdmin: {
+      id: string;
+      name: string | null;
+      email: string;
+    };
+    report: AiReportShape;
   }>;
-  trendSeries: Array<{
-    date: string;
-    score: number;
-    remark: string;
-  }>;
-  competencyAverage: Record<string, number>;
-  message?: string;
 };
 
 function formatDate(value: string): string {
@@ -64,85 +75,134 @@ function formatDate(value: string): string {
   });
 }
 
-function toLabel(category: string): string {
-  return category.replaceAll("_", " ");
+function riskVariant(risk: RiskLevel | undefined): "success" | "warning" | "danger" | "outline" {
+  if (risk === "LOW") return "success";
+  if (risk === "MEDIUM") return "warning";
+  if (risk === "HIGH") return "danger";
+  return "outline";
 }
 
 function ReportSkeleton() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-4">
       <Card>
         <CardHeader>
-          <Skeleton className="h-6 w-64" />
-          <Skeleton className="h-3 w-72" />
+          <Skeleton className="h-6 w-56" />
+          <Skeleton className="h-4 w-72" />
         </CardHeader>
       </Card>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={`stats-${index}`}>
-            <CardHeader className="pb-3">
-              <Skeleton className="h-4 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-6 w-28" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      <Card>
-        <CardContent className="flex flex-col gap-2 pt-6">
-          {Array.from({ length: 7 }).map((_, index) => (
-            <Skeleton key={`history-${index}`} className="h-10 w-full" />
-          ))}
-        </CardContent>
-      </Card>
+      {Array.from({ length: 3 }).map((_, index) => (
+        <Card key={`sa-ai-report-skeleton-${index}`}>
+          <CardHeader>
+            <Skeleton className="h-5 w-44" />
+            <Skeleton className="h-3 w-60" />
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-5/6" />
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
 
 export function SuperAdminEmployeeReportClient({ employeeId }: { employeeId: string }) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingReportId, setEditingReportId] = useState<string | null>(null);
+  const [editJson, setEditJson] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+
   const reportQuery = useAppQuery<Payload>({
-    queryKey: ["super-admin-employee-report", employeeId],
+    queryKey: ["super-admin-employee-ai-reports", employeeId],
     url: `/api/super-admin/employees/${employeeId}/report`,
-    fallbackError: "Failed to load employee report.",
+    fallbackError: "Failed to load AI reports.",
   });
+
+  const updateMutation = useAppMutation<
+    { report: unknown },
+    { reportId: string; report: unknown }
+  >({
+    mutationKey: ["super-admin-ai-report-update"],
+    mutationFn: async ({ reportId, report }) => {
+      const { data } = await apiClient.patch<{ report: unknown }>(
+        `/api/super-admin/ai-reports/${reportId}`,
+        {
+          report,
+        },
+      );
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-employee-ai-reports", employeeId]],
+    fallbackError: "Failed to update AI report.",
+  });
+
+  const deleteMutation = useAppMutation<{ success: boolean }, { reportId: string }>({
+    mutationKey: ["super-admin-ai-report-delete"],
+    mutationFn: async ({ reportId }) => {
+      const { data } = await apiClient.delete<{ success: boolean }>(
+        `/api/super-admin/ai-reports/${reportId}`,
+      );
+      return data;
+    },
+    invalidateQueryKeys: [["super-admin-employee-ai-reports", employeeId]],
+    fallbackError: "Failed to delete AI report.",
+  });
+
   const data = reportQuery.data ?? null;
-  const loading = reportQuery.isLoading;
-  const error = reportQuery.error?.message ?? null;
+  const activeEditReport = useMemo(
+    () => data?.reports.find((report) => report.id === editingReportId) ?? null,
+    [data, editingReportId],
+  );
 
-  const competencyData = useMemo(() => {
-    if (!data) return [];
-    return Object.entries(data.competencyAverage).map(([key, score]) => ({
-      category: toLabel(key),
-      score,
-    }));
-  }, [data]);
+  function openEditDialog(reportId: string, report: unknown) {
+    setEditingReportId(reportId);
+    setEditJson(JSON.stringify(report, null, 2));
+    setEditError(null);
+    setEditOpen(true);
+  }
 
-  const trendData = useMemo(() => {
-    if (!data) return [];
-    return data.trendSeries.map((point) => ({
-      date: formatDate(point.date),
-      score: point.score,
-    }));
-  }, [data]);
+  async function saveEditedReport() {
+    if (!editingReportId) return;
+    setEditError(null);
 
-  if (loading) {
+    try {
+      const parsed = JSON.parse(editJson) as unknown;
+      await updateMutation.mutateAsync({
+        reportId: editingReportId,
+        report: parsed,
+      });
+      setEditOpen(false);
+    } catch (error) {
+      setEditError(error instanceof Error ? error.message : "Failed to update report.");
+    }
+  }
+
+  async function deleteReport(reportId: string) {
+    const confirmed = window.confirm("Delete this AI report permanently?");
+    if (!confirmed) return;
+
+    await deleteMutation.mutateAsync({ reportId });
+  }
+
+  if (reportQuery.isLoading) {
     return <ReportSkeleton />;
   }
 
-  if (!data || error) {
+  if (!data) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Unable to load employee report</CardTitle>
-          <CardDescription>{error ?? "No report data available."}</CardDescription>
+          <CardTitle>Unable to load reports</CardTitle>
+          <CardDescription>{reportQuery.error?.message ?? "No report data available."}</CardDescription>
         </CardHeader>
       </Card>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="space-y-5">
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -151,154 +211,138 @@ export function SuperAdminEmployeeReportClient({ employeeId }: { employeeId: str
               {data.employee.department} · {data.employee.jobRole} · {data.employee.site}
             </CardDescription>
             <p className="mt-1 text-xs text-muted-foreground">
-              Managed by {data.employee.subAdmin.name} ({data.employee.subAdmin.email})
+              Owner: {data.employee.subAdmin.name} ({data.employee.subAdmin.email})
             </p>
           </div>
+          <Button size="sm" variant="outline" asChild>
+            <Link href={`/super-admin/employees/${employeeId}`}>Open Employee Profile</Link>
+          </Button>
+        </CardHeader>
+      </Card>
 
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" asChild>
-              <a href="/api/super-admin/export/csv">
-                <Download data-icon="inline-start" />
-                Export Platform CSV
-              </a>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <a
-                href={`/super-admin/employees/${employeeId}/report/print`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                <Printer data-icon="inline-start" />
-                Print Report
-              </a>
-            </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/super-admin/employees/${employeeId}`}>
-                <ArrowLeft data-icon="inline-start" />
-                Back To Profile
-              </Link>
-            </Button>
+      {data.reports.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No AI reports generated yet for this employee.
+          </CardContent>
+        </Card>
+      ) : (
+        data.reports.map((item) => (
+          <Card key={item.id}>
+            <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle className="text-base">Assessment: {formatDate(item.submission.submittedAt)}</CardTitle>
+                <CardDescription>
+                  Score {item.submission.totalScore.toFixed(2)} / 5 · {item.submission.remark} ({item.submission.remarkScore}/5)
+                </CardDescription>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Submitted by {item.subAdmin.name ?? item.subAdmin.email}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={riskVariant(item.report.riskLevel)}>
+                  {item.report.riskLevel ?? "UNKNOWN"} RISK
+                </Badge>
+                <Badge variant="outline">
+                  {item.provider}:{item.model}
+                </Badge>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href={`/super-admin/employees/${employeeId}/report/print?reportId=${item.id}`}>
+                    Download PDF
+                  </Link>
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => openEditDialog(item.id, item.report)}>
+                  <Pencil data-icon="inline-start" />
+                  Edit
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => void deleteReport(item.id)}>
+                  <Trash2 data-icon="inline-start" />
+                  Delete
+                </Button>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Summary</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {item.report.summary ?? "No summary provided by AI model."}
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Strengths</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-foreground">
+                    {(item.report.strengths ?? []).length > 0 ? (
+                      item.report.strengths?.map((strength, index) => (
+                        <li key={`sa-strength-${item.id}-${index}`}>{strength}</li>
+                      ))
+                    ) : (
+                      <li>No strengths listed.</li>
+                    )}
+                  </ul>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Improvements</p>
+                  <ul className="mt-1 list-disc space-y-1 pl-4 text-sm text-foreground">
+                    {(item.report.improvements ?? []).length > 0 ? (
+                      item.report.improvements?.map((improvement, index) => (
+                        <li key={`sa-improvement-${item.id}-${index}`}>{improvement}</li>
+                      ))
+                    ) : (
+                      <li>No improvement areas listed.</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Coach Message</p>
+                <p className="mt-1 text-sm text-foreground">
+                  {item.report.coachingMessage ?? "No coaching note available."}
+                </p>
+              </div>
+
+              <details className="rounded-md border border-border bg-muted/30 p-3">
+                <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  View Raw AI JSON
+                </summary>
+                <pre className="mt-2 overflow-auto rounded-md bg-card p-3 text-xs text-foreground">
+                  {JSON.stringify(item.report, null, 2)}
+                </pre>
+              </details>
+            </CardContent>
+          </Card>
+        ))
+      )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Edit AI Report JSON</DialogTitle>
+            <DialogDescription>
+              Update structured report data for report ID: {activeEditReport?.id ?? "N/A"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={editJson}
+              onChange={(event) => setEditJson(event.target.value)}
+              className="min-h-[360px] font-mono text-xs"
+            />
+            {editError ? <p className="text-sm text-destructive">{editError}</p> : null}
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" onClick={() => void saveEditedReport()} disabled={updateMutation.isPending}>
+                Save JSON
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(false)} disabled={updateMutation.isPending}>
+                Cancel
+              </Button>
+            </div>
           </div>
-        </CardHeader>
-      </Card>
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Total Submissions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="font-heading text-2xl text-foreground">{data.report?.totalSubmissions ?? 0}</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Latest Score</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScoreBadge score={data.report?.latestScore ?? null} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Average Score</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScoreBadge score={data.report?.averageScore ?? null} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardDescription>Trend</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TrendIndicator trend={data.report?.trend} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Latest Remark</CardTitle>
-          <CardDescription>Current behavioral safety band and interpretation.</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2">
-          <RemarkBadge
-            remarkScore={data.report?.latestRemarkScore ?? null}
-            remark={data.report?.latestRemark ?? null}
-          />
-          <p className="text-sm text-muted-foreground">
-            {data.report?.latestRemarkDescription ?? "No remark context available yet."}
-          </p>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Score Trend</CardTitle>
-            <CardDescription>Progress over the complete submission history.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ScoreTrendChart data={trendData} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Competency Breakdown</CardTitle>
-            <CardDescription>Average category score across all submissions.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CompetencyBarChart data={competencyData} />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Assessment History</CardTitle>
-          <CardDescription>Chronological record of all submissions and response depth.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Score</TableHead>
-                <TableHead>Remark</TableHead>
-                <TableHead>Responses</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {data.submissions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="h-16 text-center text-muted-foreground">
-                    No submissions yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.submissions.map((submission) => (
-                  <TableRow key={submission.id}>
-                    <TableCell>{formatDate(submission.submittedAt)}</TableCell>
-                    <TableCell>
-                      <ScoreBadge score={submission.totalScore} />
-                    </TableCell>
-                    <TableCell>
-                      <RemarkBadge remarkScore={submission.remarkScore} remark={submission.remark} />
-                    </TableCell>
-                    <TableCell>{submission._count.responses}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

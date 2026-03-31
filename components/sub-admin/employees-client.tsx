@@ -388,7 +388,6 @@ export function EmployeesClient() {
                     department: event.target.value,
                   }))
                 }
-                required
               />
             </div>
 
@@ -408,7 +407,6 @@ export function EmployeesClient() {
                     jobRole: event.target.value,
                   }))
                 }
-                required
               />
             </div>
 
@@ -428,7 +426,6 @@ export function EmployeesClient() {
                     phoneNumber: event.target.value,
                   }))
                 }
-                required
               />
             </div>
 
@@ -448,7 +445,6 @@ export function EmployeesClient() {
                     site: event.target.value,
                   }))
                 }
-                required
               />
             </div>
 

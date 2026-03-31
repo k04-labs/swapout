@@ -2,6 +2,7 @@ import type { CompetencyCategory } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { apiValidationError, handleApiError } from "@/lib/api-response";
 import { auditLog, getRequestMetadata } from "@/lib/audit";
+import { generateAssessmentAiReport } from "@/lib/ai-report";
 import { prisma } from "@/lib/prisma";
 import { requireApprovedSubAdmin } from "@/lib/sub-admin-auth";
 import { updateEmployeeReport } from "@/lib/reporting";
@@ -38,6 +39,15 @@ export async function POST(
         subAdminId: subAdmin.id,
       },
       include: {
+        employee: {
+          select: {
+            id: true,
+            fullName: true,
+            department: true,
+            jobRole: true,
+            site: true,
+          },
+        },
         sessionQuestions: {
           include: {
             question: {
@@ -92,6 +102,13 @@ export async function POST(
       optionId: string;
       score: number;
     }> = [];
+    const aiResponses: Array<{
+      question: string;
+      category: CompetencyCategory;
+      selectedOptionText: string;
+      selectedWeightLabel: string;
+      selectedScore: number;
+    }> = [];
 
     for (const sessionQuestion of session.sessionQuestions) {
       const selected = responseByQuestion.get(sessionQuestion.questionId);
@@ -121,6 +138,13 @@ export async function POST(
         questionId: sessionQuestion.questionId,
         optionId: selectedOption.id,
         score: selectedOption.score,
+      });
+      aiResponses.push({
+        question: sessionQuestion.question.text,
+        category,
+        selectedOptionText: selectedOption.text,
+        selectedWeightLabel: selectedOption.weightLabel,
+        selectedScore: selectedOption.score,
       });
     }
 
@@ -169,6 +193,44 @@ export async function POST(
 
     await updateEmployeeReport(session.employeeId);
 
+    const generatedReport = await generateAssessmentAiReport({
+      employee: {
+        id: session.employee.id,
+        fullName: session.employee.fullName,
+        department: session.employee.department,
+        jobRole: session.employee.jobRole,
+        site: session.employee.site,
+      },
+      submission: {
+        id: submission.id,
+        totalScore,
+        remark: remarkData.remark,
+        remarkScore: remarkData.remarkScore,
+        submittedAt: submission.submittedAt.toISOString(),
+      },
+      competencyBreakdown,
+      responses: aiResponses,
+    });
+
+    const aiReport = await prisma.assessmentAiReport.upsert({
+      where: {
+        submissionId: submission.id,
+      },
+      update: {
+        provider: generatedReport.provider,
+        model: generatedReport.model,
+        report: generatedReport.report,
+      },
+      create: {
+        submissionId: submission.id,
+        employeeId: submission.employeeId,
+        subAdminId: submission.subAdminId,
+        provider: generatedReport.provider,
+        model: generatedReport.model,
+        report: generatedReport.report,
+      },
+    });
+
     auditLog({
       event: "assessment_submitted",
       actorId: subAdmin.id,
@@ -186,6 +248,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       submissionId: submission.id,
+      aiReportId: aiReport.id,
       employeeId: submission.employeeId,
       totalScore,
       remark: remarkData.remark,
